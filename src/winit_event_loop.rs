@@ -142,31 +142,7 @@ pub fn rui(view: impl View) {
     let builder = WindowBuilder::new().with_title(&window_title);
     let window = builder.build(&event_loop).unwrap();
 
-    let setup = block_on(setup(&window));
-    let surface = setup.surface;
-    let device = Arc::new(setup.device);
-    let size = setup.size;
-    let adapter = setup.adapter;
-    let queue = Arc::new(setup.queue);
-
-    let mut config = wgpu::SurfaceConfiguration {
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-        format: surface.get_capabilities(&adapter).formats[0],
-        width: size.width,
-        height: size.height,
-        present_mode: wgpu::PresentMode::Fifo,
-        alpha_mode: wgpu::CompositeAlphaMode::Auto,
-        view_formats: vec![],
-    };
-    surface.configure(&device, &config);
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        *GLOBAL_EVENT_LOOP_PROXY.lock().unwrap() = Some(event_loop.create_proxy());
-    }
-
-    let mut vger = Vger::new(device.clone(), queue.clone(), config.format);
-    let mut cx = Context::new();
+    let mut cx = Context::new(window);
     let mut mouse_position = LocalPoint::zero();
 
     let mut commands: Vec<CommandInfo> = Vec::new();
@@ -208,9 +184,7 @@ pub fn rui(view: impl View) {
                 ..
             } => {
                 // println!("Resizing to {:?}", size);
-                config.width = size.width.max(1);
-                config.height = size.height.max(1);
-                surface.configure(&device, &config);
+                cx.renderer.resize(size.width.max(1), size.height.max(1), 1.0);
                 window.request_redraw();
             }
             WEvent::UserEvent(_) => {
@@ -239,7 +213,7 @@ pub fn rui(view: impl View) {
                 let width = window_size.width as f32 / scale;
                 let height = window_size.height as f32 / scale;
 
-                if cx.update(&view, &mut vger, &mut access_nodes, [width, height].into()) {
+                if cx.update(&view, &mut access_nodes, [width, height].into()) {
                     window.request_redraw();
                 }
 

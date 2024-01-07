@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use cosmic_text::{SubpixelBin, SwashCache, TextLayout};
-use crate::renderer::{Img, Renderer, Svg};
+use crate::renderer::{Img, Renderer};
 use image::{DynamicImage, EncodableLayout, RgbaImage};
 use peniko::{
     kurbo::{Affine, Point, Rect, Shape, Vec2},
@@ -480,41 +480,6 @@ impl Renderer for VgerRenderer {
                 pixel_format: PixelFormat::Rgba,
             }
         });
-    }
-
-    fn draw_svg<'b>(
-        &mut self,
-        svg: Svg<'b>,
-        rect: Rect,
-        brush: Option<impl Into<BrushRef<'b>>>,
-    ) {
-        let transform = self.transform.as_coeffs();
-        let width = (rect.width() * self.scale).round() as u32;
-        let height = (rect.height() * self.scale).round() as u32;
-        let width = width.max(1);
-        let height = height.max(1);
-        let origin = rect.origin();
-        let x = ((origin.x + transform[4]) * self.scale).round() as f32;
-        let y = ((origin.y + transform[5]) * self.scale).round() as f32;
-
-        let paint = brush.and_then(|brush| self.brush_to_paint(brush));
-        self.vger.render_svg(
-            x,
-            y,
-            svg.hash,
-            width,
-            height,
-            || {
-                let mut img = tiny_skia::Pixmap::new(width, height).unwrap();
-                let rtree = resvg::Tree::from_usvg(svg.tree);
-                let scale = (width as f64 / rtree.size.width())
-                    .min(height as f64 / rtree.size.height()) as f32;
-                let transform = tiny_skia::Transform::from_scale(scale, scale);
-                rtree.render(transform, &mut img.as_mut());
-                img.take()
-            },
-            paint,
-        );
     }
 
     fn transform(&mut self, transform: Affine) {

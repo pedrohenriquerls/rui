@@ -1,6 +1,7 @@
 use crate::*;
 use crate::renderer::Renderer;
 use euclid::*;
+use winit::window::Window;
 use std::any::Any;
 use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
@@ -50,8 +51,8 @@ pub struct RenderInfo<'a> {
 
 /// The Context stores all UI state. A user of the library
 /// shouldn't have to interact with it directly.
-pub struct Context<R: Renderer> {
-    renderer: R,
+pub struct Context {
+    pub renderer: renderers::VgerRenderer,
     /// Layout information for all views.
     layout: HashMap<IdPath, LayoutBox>,
 
@@ -98,7 +99,7 @@ pub struct Context<R: Renderer> {
     pub(crate) env: EnvMap,
 
     /// Regions of window that needs repainting.
-    pub(crate) dirty_region: Region<WorldSpace>,
+    pub(crate) dirty_region: Region,
 
     /// State dependencies.
     pub(crate) deps: HashMap<ViewId, Vec<ViewId>>,
@@ -124,15 +125,10 @@ pub struct Context<R: Renderer> {
     pub(crate) prev_grab_cursor: bool,
 }
 
-impl Default for Context {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Context<renderers::VgerRenderer> {
-    pub fn new() -> Self {
+impl Context {
+    pub fn new(window: Window) -> Self {
         Self {
+            renderer: renderers::VgerRenderer::new(&window, 0, 0,0.0).unwrap(),
             layout: HashMap::new(),
             view_ids: HashMap::new(),
             next_id: ViewId { id: 0 },
@@ -164,7 +160,6 @@ impl Context<renderers::VgerRenderer> {
     pub fn update(
         &mut self,
         view: &impl View,
-        vger: &mut Vger,
         access_nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
         window_size: Size2D<f32, WorldSpace>,
     ) -> bool {
@@ -220,7 +215,7 @@ impl Context<renderers::VgerRenderer> {
                 &mut LayoutArgs {
                     sz: [window_size.width, window_size.height].into(),
                     cx: self,
-                    text_bounds: &mut |str, size, max_width| vger.text_bounds(str, size, max_width),
+                    text_bounds: &mut |str, size, max_width| LocalRect::default(),
                 },
             );
             assert_eq!(path.len(), 1);
@@ -239,26 +234,11 @@ impl Context<renderers::VgerRenderer> {
     /// Redraw the UI using wgpu.
     pub fn render(
         &mut self,
-        render_info: RenderInfo,
         view: &impl View,
-        vger: &mut Vger,
         window_size: Size2D<f32, WorldSpace>,
         scale: f32,
     ) {
-        let surface = render_info.surface;
-        let device = render_info.device;
-        let config = render_info.config;
-        let frame = match surface.get_current_texture() {
-            Ok(frame) => frame,
-            Err(_) => {
-                surface.configure(device, config);
-                surface
-                    .get_current_texture()
-                    .expect("Failed to acquire next surface texture!")
-            }
-        };
-
-        vger.begin(window_size.width, window_size.height, scale);
+        self.renderer.begin(true);
 
         let mut path = vec![0];
         // Disable dirtying the state during layout and rendering
@@ -270,7 +250,7 @@ impl Context<renderers::VgerRenderer> {
             &mut LayoutArgs {
                 sz: local_window_size,
                 cx: self,
-                text_bounds: &mut |str, size, max_width| vger.text_bounds(str, size, max_width),
+                text_bounds: &mut |str, size, max_width| LocalRect::default(),
             },
         );
         assert!(path.len() == 1);
@@ -278,45 +258,23 @@ impl Context<renderers::VgerRenderer> {
         // Center the root view in the window.
         self.root_offset = ((local_window_size - sz) / 2.0).into();
 
-        vger.translate(self.root_offset);
+        // self.renderer.translate(self.root_offset);
         view.draw(&mut path, &mut self);
         self.enable_dirty = true;
 
         if self.render_dirty {
-            let paint = vger.color_paint(RED_HIGHLIGHT);
             let xf = WorldToLocal::identity();
             for rect in self.dirty_region.rects() {
-                vger.stroke_rect(
-                    xf.transform_point(rect.min()),
-                    xf.transform_point(rect.max()),
-                    0.0,
-                    1.0,
-                    paint,
+                self.renderer.fill(
+                    rect,
+                    RED_HIGHLIGHT,
+                    0
                 );
             }
         }
 
         self.dirty_region.clear();
-
-        let texture_view = frame
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let desc = wgpu::RenderPassDescriptor {
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &texture_view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            ..<_>::default()
-        };
-
-        vger.encode(&desc);
-
-        frame.present();
+        self.renderer.finish();
     }
 
     /// Process a UI event.

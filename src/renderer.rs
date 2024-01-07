@@ -5,11 +5,6 @@ use peniko::{
     BrushRef,
 };
 
-pub struct Svg<'a> {
-    // pub tree: &'a usvg::Tree,
-    pub hash: &'a [u8],
-}
-
 pub struct Img<'a> {
     pub img: &'a DynamicImage,
     pub data: &'a [u8],
@@ -41,8 +36,6 @@ pub trait Renderer {
     /// The `pos` parameter specifies the upper-left corner of the layout object
     /// (even for right-to-left text).
     fn draw_text(&mut self, layout: &TextLayout, pos: impl Into<Point>);
-
-    fn draw_svg<'b>(&mut self, svg: Svg<'b>, rect: Rect, brush: Option<impl Into<BrushRef<'b>>>);
 
     fn draw_img(&mut self, img: Img<'_>, rect: Rect);
 

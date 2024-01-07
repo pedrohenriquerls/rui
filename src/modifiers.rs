@@ -123,9 +123,9 @@ pub trait Modifiers: View + Sized {
     }
 
     /// Constrains the size of a view.
-    fn size<Sz: Into<LocalSize>>(self, size: Sz) -> Size<Self> {
-        Size::new(self, size.into())
-    }
+    // fn size<Sz: Into<LocalSize>>(self, size: Sz) -> Size<Self> {
+    //     Size::new(self, size.into())
+    // }
 
     /// Calls a function in response to a tap.
     fn tap<A: 'static, F: Fn(&mut Context) -> A + 'static>(self, f: F) -> Tap<Self, TapAdapter<F>> {

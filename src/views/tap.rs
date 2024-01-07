@@ -107,9 +107,9 @@ where
         }
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, cx: &mut Context) {
         path.push(0);
-        self.child.draw(path, args);
+        self.child.draw(path, cx);
         path.pop();
     }
 

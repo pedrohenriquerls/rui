@@ -1,6 +1,6 @@
 use crate::*;
 use crate::renderer::Renderer;
-use euclid::*;
+use kurbo::{Affine, Point, Rect, Size, Vec2};
 use winit::window::Window;
 use std::any::Any;
 use std::any::TypeId;
@@ -8,16 +8,17 @@ use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
 use std::ops;
 
-pub type LocalSpace = vger::defs::LocalSpace;
-pub type WorldSpace = vger::defs::WorldSpace;
-pub type LocalRect = Rect<f32, LocalSpace>;
-pub type LocalOffset = Vector2D<f32, LocalSpace>;
-pub type LocalSize = Size2D<f32, LocalSpace>;
-pub type LocalPoint = Point2D<f32, LocalSpace>;
-pub type WorldRect = Rect<f32, WorldSpace>;
-pub type WorldPoint = Point2D<f32, WorldSpace>;
-pub type LocalToWorld = Transform2D<f32, LocalSpace, WorldSpace>;
-pub type WorldToLocal = Transform2D<f32, WorldSpace, LocalSpace>;
+pub type LocalSpace = Rect;
+pub type WorldSpace = Rect;
+pub type LocalRect = Rect;
+pub type LocalOffset = Vec2;
+pub type LocalSize = Size;
+pub type LocalPoint = Point;
+pub type WorldRect = Rect;
+pub type WorldPoint = Point;
+pub type LocalToWorld = Affine;
+// pub type LocalToWorld = Transform2D<f32, LocalSpace, WorldSpace>;
+pub type WorldToLocal = Affine;
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct CommandInfo {
@@ -108,7 +109,7 @@ pub struct Context {
     pub(crate) id_stack: Vec<ViewId>,
 
     /// Previous window size.
-    window_size: Size2D<f32, WorldSpace>,
+    window_size: Size,
 
     /// Offset for events at the root level.
     root_offset: LocalOffset,
@@ -133,8 +134,8 @@ impl Context {
             view_ids: HashMap::new(),
             next_id: ViewId { id: 0 },
             touches: [ViewId::default(); 16],
-            starts: [LocalPoint::zero(); 16],
-            previous_position: [LocalPoint::zero(); 16],
+            starts: [LocalPoint::ZERO; 16],
+            previous_position: [LocalPoint::ZERO; 16],
             mouse_button: None,
             key_mods: Default::default(),
             focused_id: None,
@@ -147,8 +148,8 @@ impl Context {
             dirty_region: Region::EMPTY,
             deps: HashMap::new(),
             id_stack: vec![],
-            window_size: Size2D::default(),
-            root_offset: LocalOffset::zero(),
+            window_size: Size::default(),
+            root_offset: LocalOffset::ZERO,
             render_dirty: false,
             access_node_classes: accesskit::NodeClassSet::default(),
             grab_cursor: false,
@@ -161,7 +162,7 @@ impl Context {
         &mut self,
         view: &impl View,
         access_nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
-        window_size: Size2D<f32, WorldSpace>,
+        window_size: Size,
     ) -> bool {
         // If the window size has changed, force a relayout.
         if window_size != self.window_size {
@@ -213,7 +214,7 @@ impl Context {
             view.layout(
                 &mut path,
                 &mut LayoutArgs {
-                    sz: [window_size.width, window_size.height].into(),
+                    sz: window_size,
                     cx: self,
                     text_bounds: &mut |str, size, max_width| LocalRect::default(),
                 },
@@ -221,7 +222,7 @@ impl Context {
             assert_eq!(path.len(), 1);
 
             // Get dirty rectangles.
-            view.dirty(&mut path, LocalToWorld::identity(), self);
+            view.dirty(&mut path, LocalToWorld::IDENTITY, self);
 
             self.clear_dirty();
 
@@ -235,8 +236,8 @@ impl Context {
     pub fn render(
         &mut self,
         view: &impl View,
-        window_size: Size2D<f32, WorldSpace>,
-        scale: f32,
+        window_size: Size,
+        scale: f64,
     ) {
         self.renderer.begin(true);
 
@@ -244,11 +245,10 @@ impl Context {
         // Disable dirtying the state during layout and rendering
         // to avoid constantly re-rendering if some state is saved.
         self.enable_dirty = false;
-        let local_window_size = window_size.cast_unit::<LocalSpace>();
         let sz = view.layout(
             &mut path,
             &mut LayoutArgs {
-                sz: local_window_size,
+                sz: window_size,
                 cx: self,
                 text_bounds: &mut |str, size, max_width| LocalRect::default(),
             },
@@ -256,14 +256,14 @@ impl Context {
         assert!(path.len() == 1);
 
         // Center the root view in the window.
-        self.root_offset = ((local_window_size - sz) / 2.0).into();
+        self.root_offset = ((window_size - sz) / 2.0).to_vec2();
 
         // self.renderer.translate(self.root_offset);
         view.draw(&mut path, self);
         self.enable_dirty = true;
 
         if self.render_dirty {
-            let xf = WorldToLocal::identity();
+            let xf = WorldToLocal::IDENTITY;
             for rect in self.dirty_region.rects() {
                 self.renderer.fill(
                     rect,

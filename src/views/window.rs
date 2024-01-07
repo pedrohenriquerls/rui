@@ -35,11 +35,10 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, cx: &mut Context) {
         path.push(0);
-        self.child.draw(path, args);
+        self.child.draw(path, cx);
         path.pop();
-        let cx = &mut args.cx;
         if cx.window_title != self.title {
             cx.window_title = self.title.clone();
         }
@@ -122,11 +121,11 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, cx: &mut Context) {
         path.push(0);
-        self.child.draw(path, args);
+        self.child.draw(path, cx);
         path.pop();
-        args.cx.fullscreen = true;
+        cx.fullscreen = true;
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {

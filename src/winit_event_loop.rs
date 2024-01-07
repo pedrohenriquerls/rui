@@ -5,6 +5,8 @@ use std::{
     sync::Mutex,
 };
 
+use kurbo::Size;
+
 use winit::{
     dpi::PhysicalSize,
     event::{
@@ -142,7 +144,7 @@ pub fn rui(view: impl View) {
     let window = builder.build(&event_loop).unwrap();
 
     let mut cx = Context::new(window);
-    let mut mouse_position = LocalPoint::zero();
+    let mut mouse_position = LocalPoint::ZERO;
 
     let mut commands: Vec<CommandInfo> = Vec::new();
     let mut command_map = HashMap::new();
@@ -207,12 +209,12 @@ pub fn rui(view: impl View) {
                 // can just render here instead.
 
                 let window_size = window.inner_size();
-                let scale = window.scale_factor() as f32;
+                let scale = window.scale_factor();
                 // println!("window_size: {:?}", window_size);
-                let width = window_size.width as f32 / scale;
-                let height = window_size.height as f32 / scale;
+                let width = window_size.width as f64 / scale;
+                let height = window_size.height as f64 / scale;
 
-                if cx.update(&view, &mut access_nodes, [width, height].into()) {
+                if cx.update(&view, &mut access_nodes, Size::new(width, height)) {
                     window.request_redraw();
                 }
 
@@ -229,15 +231,15 @@ pub fn rui(view: impl View) {
                 // the program to gracefully handle redraws requested by the OS.
 
                 let window_size = window.inner_size();
-                let scale = window.scale_factor() as f32;
+                let scale = window.scale_factor();
                 // println!("window_size: {:?}", window_size);
-                let width = window_size.width as f32 / scale;
-                let height = window_size.height as f32 / scale;
+                let width = window_size.width as f64 / scale;
+                let height = window_size.height as f64 / scale;
 
                 // println!("RedrawRequested");
                 cx.render(
                     &view,
-                    [width, height].into(),
+                    Size::new(width, height),
                     scale,
                 );
             }
@@ -282,12 +284,11 @@ pub fn rui(view: impl View) {
                     return;
                 }
 
-                let scale = window.scale_factor() as f32;
-                let position = [
-                    location.x as f32 / scale,
-                    (cx.renderer.config.height as f32 - location.y as f32) / scale,
-                ]
-                .into();
+                let scale = window.scale_factor();
+                let position = LocalPoint::new(
+                    location.x as f64 / scale,
+                    (cx.renderer.config.height as f64 - location.y as f64) / scale,
+                );
 
                 let delta = position - cx.previous_position[0];
 
@@ -312,13 +313,12 @@ pub fn rui(view: impl View) {
                 event: WindowEvent::CursorMoved { position, .. },
                 ..
             } => {
-                let scale = window.scale_factor() as f32;
-                mouse_position = [
-                    position.x as f32 / scale,
-                    (cx.renderer.config.height as f32 - position.y as f32) / scale,
-                ]
-                .into();
-                // let event = Event::TouchMove {
+                let scale = window.scale_factor();
+                mouse_position = LocalPoint::new(
+                    position.x / scale,
+                    (cx.renderer.config.height as f64 - position.y as f64) / scale,
+                );
+                                // let event = Event::TouchMove {
                 //     id: 0,
                 //     position: mouse_position,
                 // };
@@ -521,7 +521,7 @@ pub fn rui(view: impl View) {
                 ..
             } => {
                 // Flip y coordinate.
-                let d: LocalOffset = [delta.0 as f32, -delta.1 as f32].into();
+                let d = LocalOffset::new(delta.0, -delta.1);
 
                 let event = Event::TouchMove {
                     id: 0,

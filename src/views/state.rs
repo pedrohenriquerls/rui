@@ -1,4 +1,5 @@
 use crate::*;
+use kurbo::Rect;
 use std::any::Any;
 
 /// Weak reference to app state.
@@ -68,11 +69,11 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let id = args.cx.view_id(path);
-        args.cx.init_state(id, &self.default);
+    fn draw(&self, path: &mut IdPath, cx: &mut Context) {
+        let id = cx.view_id(path);
+        cx.init_state(id, &self.default);
         path.push(0);
-        (self.func)(StateHandle::new(id), args.cx).draw(path, args);
+        (self.func)(StateHandle::new(id), cx).draw(path, cx);
         path.pop();
     }
 
@@ -115,15 +116,15 @@ where
             args.cx.deps.insert(id, deps);
 
             let layout_box = LayoutBox {
-                rect: LocalRect::new(LocalPoint::zero(), child_size),
-                offset: LocalOffset::zero(),
+                rect: LocalRect::from_origin_size(LocalPoint::ZERO, child_size),
+                offset: LocalOffset::ZERO,
             };
             args.cx.update_layout(path, layout_box);
 
             args.cx.id_stack.pop();
         }
 
-        args.cx.get_layout(path).rect.size
+        args.cx.get_layout(path).rect.size()
     }
 
     fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
@@ -137,14 +138,17 @@ where
         if holder.dirty {
             // Add a region.
             let rect = cx.get_layout(path).rect;
-            let pts: [LocalPoint; 4] = [
-                rect.min(),
-                [rect.max_x(), rect.min_y()].into(),
-                [rect.min_x(), rect.max_y()].into(),
-                rect.max(),
-            ];
-            let world_pts = pts.map(|p| xform.transform_point(p));
-            cx.dirty_region.add_rect(WorldRect::from_points(world_pts));
+            // let pts: [LocalPoint; 4] = [
+            //     rect.origin(),
+            //     Point::new(rect.max_x(), rect.min_y()),
+            //     Point::new(rect.min_x(), rect.max_y()),
+            //     Rect::from_origin_size(rect.origin(), rect.size()).origin(),
+            // ];
+            // let world_pts = pts.map(|p| xform.translate(p.to_vec2()));
+
+            let p0 = rect.origin();
+            let p1 = Rect::from_origin_size(rect.origin(), rect.size()).origin();
+            cx.dirty_region.add_rect(WorldRect::from_points(p0, p1));
         } else {
             path.push(0);
             (self.func)(StateHandle::new(id), cx).dirty(path, xform, cx);

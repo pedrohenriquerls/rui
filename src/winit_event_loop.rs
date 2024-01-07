@@ -1,9 +1,8 @@
 use crate::*;
 
-use futures::executor::block_on;
 use std::{
     collections::{HashMap, VecDeque},
-    sync::{Arc, Mutex},
+    sync::Mutex,
 };
 
 use winit::{
@@ -237,14 +236,7 @@ pub fn rui(view: impl View) {
 
                 // println!("RedrawRequested");
                 cx.render(
-                    RenderInfo {
-                        device: &device,
-                        surface: &surface,
-                        config: &config,
-                        queue: &queue,
-                    },
                     &view,
-                    &mut vger,
                     [width, height].into(),
                     scale,
                 );
@@ -293,7 +285,7 @@ pub fn rui(view: impl View) {
                 let scale = window.scale_factor() as f32;
                 let position = [
                     location.x as f32 / scale,
-                    (config.height as f32 - location.y as f32) / scale,
+                    (cx.renderer.config.height as f32 - location.y as f32) / scale,
                 ]
                 .into();
 
@@ -323,7 +315,7 @@ pub fn rui(view: impl View) {
                 let scale = window.scale_factor() as f32;
                 mouse_position = [
                     position.x as f32 / scale,
-                    (config.height as f32 - position.y as f32) / scale,
+                    (cx.renderer.config.height as f32 - position.y as f32) / scale,
                 ]
                 .into();
                 // let event = Event::TouchMove {

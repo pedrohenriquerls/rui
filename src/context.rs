@@ -259,7 +259,7 @@ impl Context {
         self.root_offset = ((local_window_size - sz) / 2.0).into();
 
         // self.renderer.translate(self.root_offset);
-        view.draw(&mut path, &mut self);
+        view.draw(&mut path, self);
         self.enable_dirty = true;
 
         if self.render_dirty {
@@ -267,8 +267,8 @@ impl Context {
             for rect in self.dirty_region.rects() {
                 self.renderer.fill(
                     rect,
-                    RED_HIGHLIGHT,
-                    0
+                    peniko::Color::RED,
+                    0.0
                 );
             }
         }

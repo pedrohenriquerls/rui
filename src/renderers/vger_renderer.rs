@@ -20,7 +20,7 @@ pub struct VgerRenderer {
     surface: Surface,
     vger: Vger,
     alt_vger: Option<Vger>,
-    config: SurfaceConfiguration,
+    pub config: SurfaceConfiguration,
     scale: f64,
     transform: Affine,
     clip: Option<Rect>,

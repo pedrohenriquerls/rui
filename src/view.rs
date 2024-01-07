@@ -1,11 +1,6 @@
 use crate::*;
 use std::any::{Any, TypeId};
 
-pub struct DrawArgs<'a> {
-    pub cx: &'a mut Context,
-    pub vger: &'a mut Vger,
-}
-
 pub struct LayoutArgs<'a> {
     pub sz: LocalSize,
     pub cx: &'a mut Context,
@@ -41,7 +36,7 @@ pub trait View: private::Sealed + 'static {
     fn dirty(&self, _path: &mut IdPath, _xform: LocalToWorld, _cx: &mut Context) {}
 
     /// Draws the view using vger.
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs);
+    fn draw(&self, path: &mut IdPath, cx: &mut Context);
 
     /// Gets IDs for views currently in use.
     ///

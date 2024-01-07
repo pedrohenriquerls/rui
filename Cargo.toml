@@ -23,7 +23,13 @@ default = [ "winit" ]
 euclid = "0.22.7"
 wgpu = "0.18.0"
 futures = "0.3"
-vger = "0.2.8"
+vger = { path="../vger-rs" }
+anyhow = "1.0.69"
+raw-window-handle = "0.5.1"
+cosmic-text = { git = "https://github.com/lapce/cosmic-text", rev = "25f260eced296296ca22d22a04cbb3026f5fe2a2" }
+peniko = { git = "https://github.com/linebender/peniko", rev = "cafdac9a211a0fb2fec5656bd663d1ac770bcc81" }
+kurbo = { version = "0.9.5", features = ["serde"] }
+image = { version = "0.24", features = ["jpeg", "png"] }
 accesskit = "0.11.0"
 lazy_static = "1.4.0"
 winit = { version = "0.28.1", optional = true }

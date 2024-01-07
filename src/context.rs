@@ -1,4 +1,5 @@
 use crate::*;
+use crate::renderer::Renderer;
 use euclid::*;
 use std::any::Any;
 use std::any::TypeId;
@@ -49,7 +50,8 @@ pub struct RenderInfo<'a> {
 
 /// The Context stores all UI state. A user of the library
 /// shouldn't have to interact with it directly.
-pub struct Context {
+pub struct Context<R: Renderer> {
+    renderer: R,
     /// Layout information for all views.
     layout: HashMap<IdPath, LayoutBox>,
 
@@ -128,7 +130,7 @@ impl Default for Context {
     }
 }
 
-impl Context {
+impl Context<renderers::VgerRenderer> {
     pub fn new() -> Self {
         Self {
             layout: HashMap::new(),
@@ -277,7 +279,7 @@ impl Context {
         self.root_offset = ((local_window_size - sz) / 2.0).into();
 
         vger.translate(self.root_offset);
-        view.draw(&mut path, &mut DrawArgs { cx: self, vger });
+        view.draw(&mut path, &mut self);
         self.enable_dirty = true;
 
         if self.render_dirty {

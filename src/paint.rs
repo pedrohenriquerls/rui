@@ -14,17 +14,3 @@ pub enum Paint {
         outer_color: Color,
     },
 }
-
-impl Paint {
-    pub fn vger_paint(&self, vger: &mut Vger) -> PaintIndex {
-        match self {
-            Paint::Color(color) => vger.color_paint(*color),
-            Paint::Gradient {
-                start,
-                end,
-                inner_color,
-                outer_color,
-            } => vger.linear_gradient(*start, *end, *inner_color, *outer_color, 0.0),
-        }
-    }
-}

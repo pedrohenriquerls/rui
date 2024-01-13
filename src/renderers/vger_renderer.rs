@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use cosmic_text::{SubpixelBin, SwashCache, TextLayout};
-use crate::renderer::{Img, Renderer};
+use crate::{renderers::{Img, Renderer}, Paint};
 use image::{DynamicImage, EncodableLayout, RgbaImage};
 use vger::{Image, PaintIndex, PixelFormat, Vger};
 use wgpu::{Device, DeviceType, Queue, StoreOp, Surface, SurfaceConfiguration, TextureFormat};
@@ -128,25 +128,15 @@ impl VgerRenderer {
 }
 
 impl VgerRenderer {
-    fn brush_to_paint<'b>(&mut self, brush: impl Into<BrushRef<'b>>) -> Option<PaintIndex> {
-        let paint = match brush.into() {
-            BrushRef::Solid(color) => self.vger.color_paint(vger_color(color)),
-            BrushRef::Gradient(g) => match g.kind {
-                GradientKind::Linear { start, end } => {
-                    let mut stops = g.stops.iter();
-                    let inner_color = stops.next()?;
-                    let outer_color = stops.next()?;
-                    let inner_color = vger_color(inner_color.color);
-                    let outer_color = vger_color(outer_color.color);
-                    let start = vger::defs::LocalPoint::new(start.x as f32, start.y as f32);
-                    let end = vger::defs::LocalPoint::new(end.x as f32, end.y as f32);
-                    self.vger
-                        .linear_gradient(start, end, inner_color, outer_color, 0.0)
-                }
-                GradientKind::Radial { .. } => return None,
-                GradientKind::Sweep { .. } => return None,
-            },
-            BrushRef::Image(_) => return None,
+    fn brush_to_paint<'b>(&mut self, brush: Paint) -> Option<PaintIndex> {
+        let paint = match self {
+            Paint::Color(color) => self.vger.color_paint(*color),
+            Paint::Gradient {
+                start,
+                end,
+                inner_color,
+                outer_color,
+            } => self.vger.linear_gradient(*start, *end, *inner_color, *outer_color, 0.0),
         };
         Some(paint)
     }
@@ -285,7 +275,7 @@ impl Renderer for VgerRenderer {
         );
     }
 
-    fn stroke<'b>(&mut self, shape: &impl Shape, brush: impl Into<BrushRef<'b>>, width: f64) {
+    fn stroke<'b>(&mut self, shape: &impl Shape, brush: Paint, width: f64) {
         let paint = match self.brush_to_paint(brush) {
             Some(paint) => paint,
             None => return,

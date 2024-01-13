@@ -7,7 +7,6 @@ pub use vger::{LineMetrics, PaintIndex, Vger};
 #[macro_use]
 extern crate lazy_static;
 
-mod renderer;
 mod renderers;
 
 mod view;

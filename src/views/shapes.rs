@@ -21,12 +21,8 @@ impl Circle {
 }
 
 impl View for Circle {
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let (center, radius) = self.geom(path, args.cx);
-
-        let vger = &mut args.vger;
-        let paint = self.paint.vger_paint(vger);
-        vger.fill_circle(center, radius, paint);
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+        args.renderer.fill(self, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
@@ -94,12 +90,8 @@ impl Rectangle {
 }
 
 impl View for Rectangle {
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let rect = self.geom(path, args.cx);
-
-        let vger = &mut args.vger;
-        let paint = self.paint.vger_paint(vger);
-        vger.fill_rect(rect, self.corner_radius, paint);
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+        args.renderer.fill(self, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
@@ -136,4 +128,9 @@ pub fn rectangle() -> Rectangle {
         corner_radius: 0.0,
         paint: Paint::Color(Color::CYAN),
     }
+}
+
+pub enum Shape {
+    Circle,
+    Rectangle
 }

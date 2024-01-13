@@ -4,8 +4,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use cosmic_text::{SubpixelBin, SwashCache, TextLayout};
-use crate::{renderers::{Img, Renderer}, Paint};
-use crate::renderers::{}
+use crate::*;
 use image::{DynamicImage, EncodableLayout, RgbaImage};
 use vger::{Image, PaintIndex, PixelFormat, Vger};
 use wgpu::{Device, DeviceType, Queue, StoreOp, Surface, SurfaceConfiguration, TextureFormat};
@@ -19,8 +18,8 @@ pub struct VgerRenderer {
     alt_vger: Option<Vger>,
     pub config: SurfaceConfiguration,
     scale: f64,
-    transform: Affine,
-    clip: Option<Rect>,
+    transform: LocalToWorld,
+    clip: Option<LocalRect>,
     capture: bool,
 }
 
@@ -108,7 +107,7 @@ impl VgerRenderer {
             alt_vger: None,
             scale,
             config,
-            transform: Affine::IDENTITY,
+            transform: LocalToWorld::identity(),
             clip: None,
             capture: false,
         })
@@ -130,7 +129,7 @@ impl VgerRenderer {
 
 impl VgerRenderer {
     fn brush_to_paint<'b>(&mut self, brush: Paint) -> Option<PaintIndex> {
-        let paint = match self {
+        let paint = match brush {
             Paint::Color(color) => self.vger.color_paint(*color),
             Paint::Gradient {
                 start,
@@ -142,20 +141,20 @@ impl VgerRenderer {
         Some(paint)
     }
 
-    fn vger_point(&self, point: Point) -> vger::defs::LocalPoint {
+    fn vger_point(&self, point: LocalPoint) -> vger::defs::LocalPoint {
         let coeffs = self.transform.as_coeffs();
-        let point = point + Vec2::new(coeffs[4], coeffs[5]);
+        let point = point + LocalOffset::new(coeffs[4], coeffs[5]);
         vger::defs::LocalPoint::new(
             (point.x * self.scale).round() as f32,
             (point.y * self.scale).round() as f32,
         )
     }
 
-    fn vger_rect(&self, rect: Rect) -> vger::defs::LocalRect {
+    fn vger_rect(&self, rect: LocalRect) -> vger::defs::LocalRect {
         let origin = rect.origin();
         let origin = self.vger_point(origin);
 
-        let end = Point::new(rect.x1, rect.y1);
+        let end = LocalPoint::new(rect.x1, rect.y1);
         let end = self.vger_point(end);
 
         let size = (end - origin).to_size();
@@ -268,7 +267,7 @@ impl Renderer for VgerRenderer {
             mem::swap(&mut self.vger, self.alt_vger.as_mut().unwrap())
         }
 
-        self.transform = Affine::IDENTITY;
+        self.transform = LocalToWorld::identity();
         self.vger.begin(
             self.config.width as f32,
             self.config.height as f32,
@@ -276,7 +275,7 @@ impl Renderer for VgerRenderer {
         );
     }
 
-    fn stroke<'b>(&mut self, shape: &impl Shape, brush: Paint, width: f64) {
+    fn stroke<'b>(&mut self, shape: Shape, brush: Paint, width: f64) {
         let paint = match self.brush_to_paint(brush) {
             Some(paint) => paint,
             None => return,
@@ -310,26 +309,10 @@ impl Renderer for VgerRenderer {
                 width,
                 paint,
             );
-        } else {
-            for segment in shape.path_segments(0.0) {
-                match segment {
-                    peniko::kurbo::PathSeg::Line(_) => todo!(),
-                    peniko::kurbo::PathSeg::Quad(bez) => {
-                        self.vger.stroke_bezier(
-                            self.vger_point(bez.p0),
-                            self.vger_point(bez.p1),
-                            self.vger_point(bez.p2),
-                            width,
-                            paint,
-                        );
-                    }
-                    peniko::kurbo::PathSeg::Cubic(_) => todo!(),
-                }
-            }
         }
     }
 
-    fn fill<'b>(&mut self, path: &impl Shape, brush: impl Into<BrushRef<'b>>, blur_radius: f64) {
+    fn fill<'b>(&mut self, path: &impl Shape, brush: Paint, blur_radius: f64) {
         let paint = match self.brush_to_paint(brush) {
             Some(paint) => paint,
             None => return,
@@ -355,37 +338,15 @@ impl Renderer for VgerRenderer {
                 paint,
             )
         } else {
-            let mut first = true;
-            for segment in path.path_segments(0.1) {
-                match segment {
-                    peniko::kurbo::PathSeg::Line(line) => {
-                        if first {
-                            first = false;
-                            self.vger.move_to(self.vger_point(line.p0));
-                        }
-                        self.vger
-                            .quad_to(self.vger_point(line.p1), self.vger_point(line.p1));
-                    }
-                    peniko::kurbo::PathSeg::Quad(quad) => {
-                        if first {
-                            first = false;
-                            self.vger.move_to(self.vger_point(quad.p0));
-                        }
-                        self.vger
-                            .quad_to(self.vger_point(quad.p1), self.vger_point(quad.p2));
-                    }
-                    peniko::kurbo::PathSeg::Cubic(_) => {}
-                }
-            }
             self.vger.fill(paint);
         }
     }
 
-    fn draw_text(&mut self, layout: &TextLayout, pos: impl Into<Point>) {
+    fn draw_text(&mut self, layout: &TextLayout, pos: impl Into<LocalPoint>) {
         let mut swash_cache = SwashCache::new();
         let transform = self.transform.as_coeffs();
-        let offset = Vec2::new(transform[4], transform[5]);
-        let pos: Point = pos.into();
+        let offset = LocalOffset::new(transform[4], transform[5]);
+        let pos: LocalPoint = pos.into();
         let clip = self.clip;
         for line in layout.layout_runs() {
             if let Some(rect) = clip {
@@ -445,7 +406,7 @@ impl Renderer for VgerRenderer {
         }
     }
 
-    fn draw_img(&mut self, img: Img<'_>, rect: Rect) {
+    fn draw_img(&mut self, img: Img<'_>, rect: LocalRect) {
         let transform = self.transform.as_coeffs();
         let width = (rect.width() * self.scale).round() as u32;
         let height = (rect.height() * self.scale).round() as u32;
@@ -469,7 +430,7 @@ impl Renderer for VgerRenderer {
         });
     }
 
-    fn transform(&mut self, transform: Affine) {
+    fn transform(&mut self, transform: LocalToWorld) {
         self.transform = transform;
     }
 
@@ -477,7 +438,7 @@ impl Renderer for VgerRenderer {
         self.vger.set_z_index(z_index);
     }
 
-    fn clip(&mut self, shape: &impl Shape) {
+    fn clip(&mut self, shape: Shape) {
         let (rect, radius) = if let Some(rect) = shape.as_rect() {
             (rect, 0.0)
         } else if let Some(rect) = shape.as_rounded_rect() {
@@ -490,7 +451,7 @@ impl Renderer for VgerRenderer {
             .scissor(self.vger_rect(rect), (radius * self.scale) as f32);
 
         let transform = self.transform.as_coeffs();
-        let offset = Vec2::new(transform[4], transform[5]);
+        let offset = LocalOffset::new(transform[4], transform[5]);
         self.clip = Some(rect + offset);
     }
 

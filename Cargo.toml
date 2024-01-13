@@ -27,6 +27,11 @@ vger = "0.2.8"
 accesskit = "0.11.0"
 lazy_static = "1.4.0"
 winit = { version = "0.28.1", optional = true }
+vger = { path="../vger-rs" }
+anyhow = "1.0.69"
+raw-window-handle = "0.5.1"
+cosmic-text = { git = "https://github.com/lapce/cosmic-text", rev = "25f260eced296296ca22d22a04cbb3026f5fe2a2" }
+image = { version = "0.24", features = ["jpeg", "png"] }
 
 # Seems we can't publish to crates.io with this dependency.
 # baseview = { git = "https://github.com/RustAudio/baseview", optional = true }

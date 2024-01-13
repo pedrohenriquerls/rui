@@ -68,25 +68,25 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let id = args.cx.view_id(path);
-        args.cx.init_state(id, &self.default);
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+        let id = args.view_id(path);
+        args.init_state(id, &self.default);
         path.push(0);
-        (self.func)(StateHandle::new(id), args.cx).draw(path, args);
+        (self.func)(StateHandle::new(id), args).draw(path, args);
         path.pop();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        let id = args.cx.view_id(path);
-        args.cx.init_state(id, &self.default);
+        let id = args.view_id(path);
+        args.init_state(id, &self.default);
 
         // Do we need to recompute layout?
         let mut compute_layout = true;
 
-        if let Some(deps) = args.cx.deps.get(&id) {
+        if let Some(deps) = args.deps.get(&id) {
             let mut any_dirty = false;
             for dep in deps {
-                if let Some(holder) = args.cx.state_map.get_mut(dep) {
+                if let Some(holder) = args.state_map.get_mut(dep) {
                     if holder.dirty {
                         any_dirty = true;
                         break;
@@ -98,32 +98,32 @@ where
         }
 
         if compute_layout {
-            args.cx.id_stack.push(id);
+            args.id_stack.push(id);
 
-            let view = (self.func)(StateHandle::new(id), args.cx);
+            let view = (self.func)(StateHandle::new(id), args);
 
             path.push(0);
             let child_size = view.layout(path, args);
 
             // Compute layout dependencies.
             let mut deps = vec![];
-            deps.append(&mut args.cx.id_stack.clone());
-            view.gc(path, args.cx, &mut deps);
+            deps.append(&mut args.id_stack.clone());
+            view.gc(path, args, &mut deps);
 
             path.pop();
 
-            args.cx.deps.insert(id, deps);
+            args.deps.insert(id, deps);
 
             let layout_box = LayoutBox {
                 rect: LocalRect::new(LocalPoint::zero(), child_size),
                 offset: LocalOffset::zero(),
             };
-            args.cx.update_layout(path, layout_box);
+            args.update_layout(path, layout_box);
 
-            args.cx.id_stack.pop();
+            args.id_stack.pop();
         }
 
-        args.cx.get_layout(path).rect.size
+        args.get_layout(path).rect.size
     }
 
     fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {

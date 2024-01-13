@@ -1,5 +1,6 @@
 use crate::*;
 use euclid::*;
+use winit::window::Window;
 use std::any::Any;
 use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
@@ -123,14 +124,14 @@ pub struct Context {
     pub(crate) prev_grab_cursor: bool,
 }
 
-// impl Default for Context {
-//     fn default() -> Self {
-//         Self::new()
-//     }
-// }
+impl Default for Context {
+    fn default() -> Self {
+        Self::new(Window::default())
+    }
+}
 
 impl Context {
-    pub fn new(window: Window) -> Self {
+    pub fn new(window: &mut Window) -> Self {
         Self {
             renderer: renderers::VgerRenderer::new(&window, 0, 0,0.0).unwrap(),
             layout: HashMap::new(),
@@ -252,7 +253,7 @@ impl Context {
             &mut LayoutArgs {
                 sz: local_window_size,
                 cx: self,
-                text_bounds: &mut |str, size, max_width| vger.text_bounds(str, size, max_width),
+                text_bounds: &mut |str, size, max_width| LocalRect::default(),
             },
         );
         assert!(path.len() == 1);
@@ -265,10 +266,9 @@ impl Context {
         self.enable_dirty = true;
 
         if self.render_dirty {
-            let paint = vger.color_paint(RED_HIGHLIGHT);
             let xf = WorldToLocal::identity();
             for rect in self.dirty_region.rects() {
-                self.renderer.fill(rect, paint, scale);
+                self.renderer.fill(rect, RED_HIGHLIGHT, scale);
             }
         }
 

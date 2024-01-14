@@ -24,7 +24,7 @@ where
         &self,
         event: &Event,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         for child in self.ids.iter().rev() {
@@ -35,7 +35,7 @@ where
         }
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
         for child in &self.ids {
             path.push(hh(child));
             let offset = args.get_layout(path).offset;
@@ -152,7 +152,7 @@ where
         }
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
         for child in &self.ids {
             path.push(hh(child));
             let offset = cx.get_layout(path).offset;
@@ -162,7 +162,7 @@ where
         }
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
         let mut hit = None;
         for child in &self.ids {
             path.push(hh(child));
@@ -176,7 +176,7 @@ where
         hit
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
         for child in &self.ids {
             path.push(hh(child));
             ((self.func)(child)).commands(path, cx, cmds);
@@ -184,7 +184,7 @@ where
         }
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
         map.push(cx.view_id(path));
         for child in &self.ids {
             path.push(hh(child));
@@ -197,7 +197,7 @@ where
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         let mut builder = accesskit::NodeBuilder::new(accesskit::Role::List);

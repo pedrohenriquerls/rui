@@ -368,7 +368,13 @@ impl Renderer for VgerRenderer {
                 //     continue;
                 // }
 
-                if let Some(paint) = self.brush_to_paint(Paint::Color(glyph_run.color)) {
+                let color = Color {
+                    r: glyph_run.color.r as f32,
+                    g: glyph_run.color.g as f32,
+                    b: glyph_run.color.b as f32,
+                    a: glyph_run.color.a as f32
+                };
+                if let Some(paint) = self.brush_to_paint(Paint::Color(color)) {
                     let glyph_x = x * self.scale as f32;
                     let (new_x, subpx_x) = SubpixelBin::new(glyph_x);
                     let glyph_x = new_x as f32;
@@ -433,20 +439,15 @@ impl Renderer for VgerRenderer {
     }
 
     fn clip(&mut self, shape: Shape) {
-        let (rect, radius) = if let Some(rect) = shape.as_rect() {
-            (rect, 0.0)
-        } else if let Some(rect) = shape.as_rounded_rect() {
-            (rect.rect(), rect.radii().top_left)
-        } else {
-            (shape.bounding_box(), 0.0)
-        };
-
-        self.vger
-            .scissor(self.vger_rect(rect), (radius * self.scale) as f32);
-
-        let transform = self.transform.as_coeffs();
-        let offset = LocalOffset::new(transform[4], transform[5]);
-        self.clip = Some(rect + offset);
+        match shape {
+            Shape::Rectangle(rect, corner) => {
+                self.vger.scissor(self.vger_rect(*rect), (corner * self.scale) as f32);
+                let offset = LocalOffset::new(self.transform.m31, self.transform.m32);
+                self.clip = Some(rect + offset);
+            },
+            Shape::Circle(point, radius) => {}
+            Shape::Background => {}
+        }
     }
 
     fn clear_clip(&mut self) {

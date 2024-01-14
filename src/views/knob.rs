@@ -43,7 +43,7 @@ mod tests {
 
     #[test]
     fn test_knob() {
-        let mut cx = Context::new();
+        let mut cx = Context::default();
 
         let ui = state(|| 0.0, |s, _| knob(s));
         let sz = [100.0, 100.0].into();

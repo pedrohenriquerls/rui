@@ -12,7 +12,7 @@ pub enum GestureState {
 pub trait DragFn {
     fn call(
         &self,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         pt: LocalPoint,
         delta: LocalOffset,
         state: GestureState,
@@ -25,12 +25,12 @@ pub struct DragFunc<F> {
     pub f: F,
 }
 
-impl<A: 'static, F: Fn(&mut Context, LocalOffset, GestureState, Option<MouseButton>) -> A> DragFn
+impl<A: 'static, F: Fn(&mut Context<dyn renderers::Renderer>, LocalOffset, GestureState, Option<MouseButton>) -> A> DragFn
     for DragFunc<F>
 {
     fn call(
         &self,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         _pt: LocalPoint,
         delta: LocalOffset,
         state: GestureState,
@@ -45,12 +45,12 @@ pub struct DragFuncP<F> {
     pub f: F,
 }
 
-impl<A: 'static, F: Fn(&mut Context, LocalPoint, GestureState, Option<MouseButton>) -> A> DragFn
+impl<A: 'static, F: Fn(&mut Context<dyn renderers::Renderer>, LocalPoint, GestureState, Option<MouseButton>) -> A> DragFn
     for DragFuncP<F>
 {
     fn call(
         &self,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         pt: LocalPoint,
         _delta: LocalOffset,
         state: GestureState,
@@ -76,7 +76,7 @@ impl<
 {
     fn call(
         &self,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         _pt: LocalPoint,
         delta: LocalOffset,
         state: GestureState,
@@ -125,7 +125,7 @@ where
         &self,
         event: &Event,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         let vid = cx.view_id(path);
@@ -183,7 +183,7 @@ where
         }
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
         path.push(0);
         self.child.draw(path, args);
         path.pop();
@@ -196,26 +196,26 @@ where
         sz
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
         path.push(0);
         self.child.dirty(path, xform, cx);
         path.pop();
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
         path.push(0);
         let id = self.child.hittest(path, pt, cx);
         path.pop();
         id
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
         path.push(0);
         self.child.commands(path, cx, cmds);
         path.pop();
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
         path.push(0);
         self.child.gc(path, cx, map);
         path.pop();
@@ -224,7 +224,7 @@ where
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         path.push(0);
@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_drag() {
-        let mut cx = Context::new();
+        let mut cx = Context::default();
 
         let ui = state(
             || vec![],

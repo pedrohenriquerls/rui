@@ -25,7 +25,7 @@ impl Text {
 }
 
 impl View for Text {
-    fn draw(&self, _path: &mut IdPath, args: &mut Context) {
+    fn draw(&self, _path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
         let vger = &mut args.vger;
         let origin = vger.text_bounds(self.text.as_str(), self.size, None).origin;
 
@@ -37,14 +37,14 @@ impl View for Text {
     fn layout(&self, _path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
         (args.text_bounds)(self.text.as_str(), self.size, None).size
     }
-    fn hittest(&self, _path: &mut IdPath, _pt: LocalPoint, _cx: &mut Context) -> Option<ViewId> {
+    fn hittest(&self, _path: &mut IdPath, _pt: LocalPoint, _cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
         None
     }
 
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         let aid = cx.view_id(path).access_id();
@@ -87,7 +87,7 @@ impl<V> View for V
 where
     V: std::fmt::Display + std::fmt::Debug + 'static,
 {
-    fn draw(&self, _path: &mut IdPath, args: &mut Context) {
+    fn draw(&self, _path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
         let txt = &format!("{}", self);
         let vger = &mut args.vger;
         let origin = vger.text_bounds(txt, Text::DEFAULT_SIZE, None).origin;
@@ -105,7 +105,7 @@ where
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         let aid = cx.view_id(path).access_id();

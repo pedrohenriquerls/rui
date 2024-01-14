@@ -2,19 +2,19 @@ use crate::*;
 
 /// Reads or writes a value owned by a source-of-truth.
 pub trait Binding<S>: Clone + Copy + 'static {
-    fn get<'a>(&self, cx: &'a Context) -> &'a S;
-    fn get_mut<'a>(&self, cx: &'a mut Context) -> &'a mut S;
+    fn get<'a>(&self, cx: &'a Context<dyn renderers::Renderer>) -> &'a S;
+    fn get_mut<'a>(&self, cx: &'a mut Context<dyn renderers::Renderer>) -> &'a mut S;
 
-    fn with<T>(&self, cx: &Context, f: impl FnOnce(&S) -> T) -> T {
+    fn with<T>(&self, cx: &Context<dyn renderers::Renderer>, f: impl FnOnce(&S) -> T) -> T {
         f(self.get(cx))
     }
 
-    fn with_mut<T>(&self, cx: &mut Context, f: impl FnOnce(&mut S) -> T) -> T {
+    fn with_mut<T>(&self, cx: &mut Context<dyn renderers::Renderer>, f: impl FnOnce(&mut S) -> T) -> T {
         f(self.get_mut(cx))
     }
 }
 
-pub fn setter<S>(binding: impl Binding<S>) -> impl Fn(S, &mut Context) {
+pub fn setter<S>(binding: impl Binding<S>) -> impl Fn(S, &mut Context<dyn renderers::Renderer>) {
     move |s, cx| binding.with_mut(cx, |v| *v = s)
 }
 
@@ -78,10 +78,10 @@ where
     S: 'static,
     T: 'static,
 {
-    fn get<'a>(&self, cx: &'a Context) -> &'a S {
+    fn get<'a>(&self, cx: &'a Context<dyn renderers::Renderer>) -> &'a S {
         self.lens.focus(self.binding.get(cx))
     }
-    fn get_mut<'a>(&self, cx: &'a mut Context) -> &'a mut S {
+    fn get_mut<'a>(&self, cx: &'a mut Context<dyn renderers::Renderer>) -> &'a mut S {
         self.lens.focus_mut(self.binding.get_mut(cx))
     }
 }
@@ -105,17 +105,17 @@ mod tests {
         assert_eq!(*MyLens {}.focus(&s), 42);
     }
 
-//     #[test]
-//     fn test_bind() {
-//         let mut cx = Context::new();
-//         let id = ViewId::default();
-//         cx.init_state(id, &MyState::default);
-//         let s = StateHandle::new(id);
+    #[test]
+    fn test_bind() {
+        let mut cx = Context::default();
+        let id = ViewId::default();
+        cx.init_state(id, &MyState::default);
+        let s = StateHandle::new(id);
 
-//         let b = bind(s, MyLens {});
+        let b = bind(s, MyLens {});
 
-//         *b.get_mut(&mut cx) = 42;
+        *b.get_mut(&mut cx) = 42;
 
-//         assert_eq!(*b.get(&cx), 42);
-//     }
+        assert_eq!(*b.get(&cx), 42);
+    }
 }

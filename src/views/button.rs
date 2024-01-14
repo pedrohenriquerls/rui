@@ -4,7 +4,7 @@ use accesskit::Role;
 pub const BUTTON_CORNER_RADIUS: f32 = 5.0;
 
 /// Calls a function when the button is tapped.
-pub fn button<A: 'static, F: Fn(&mut Context) -> A + 'static + Clone>(
+pub fn button<A: 'static, F: Fn(&mut Context<dyn renderers::Renderer>) -> A + 'static + Clone>(
     view: impl View + Clone,
     f: F,
 ) -> impl View {
@@ -42,7 +42,7 @@ mod tests {
 
     #[test]
     fn test_button() {
-        let mut cx = Context::new();
+        let mut cx = Context::default();
 
         let ui = state(
             || false,

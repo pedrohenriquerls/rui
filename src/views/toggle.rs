@@ -32,7 +32,7 @@ mod tests {
 
     #[test]
     fn test_toggle() {
-        let mut cx = Context::new();
+        let mut cx = Context::default();
 
         let ui = state(|| false, |s, _| toggle(s));
         let sz = [40.0, 20.0].into();

@@ -88,24 +88,24 @@ where
 /// Vertical slider built from other Views.
 pub fn vslider(
     value: f32,
-    set_value: impl Fn(&mut Context, f32) + 'static + Copy,
+    set_value: impl Fn(&mut Context<dyn renderers::Renderer>, f32) + 'static + Copy,
 ) -> impl SliderMods {
     modview(move |opts: SliderOptions, _| {
         state(
             || 0.0,
             move |height, _| {
-                canvas(move |cx, sz, vger| {
+                canvas(move |cx, sz| {
                     let h = cx[height];
                     let y = value * h;
                     let c = sz.center();
-                    let paint = vger.color_paint(BUTTON_BACKGROUND_COLOR);
-                    vger.fill_rect(
-                        euclid::rect(c.x - SLIDER_WIDTH / 2.0, 0.0, SLIDER_WIDTH, sz.height()),
+                    let paint = Paint::Color(BUTTON_BACKGROUND_COLOR);
+                    let rect = LocalRect::new(c.x - SLIDER_WIDTH / 2.0, 0.0, SLIDER_WIDTH, sz.height());
+                    cx.renderer.fill(
+                        Shape::Rectangle(&rect, 0.0),
                         0.0,
                         paint,
                     );
-                    let paint = vger.color_paint(opts.thumb);
-                    vger.fill_circle([c.x, y], SLIDER_THUMB_RADIUS, paint);
+                    cx.renderer.fill(Shape::Circle([c.x, y].into(), SLIDER_THUMB_RADIUS), Paint::Color(opts.thumb));
                 })
                 .geom(move |cx, sz, _| {
                     if sz.height != cx[height] {

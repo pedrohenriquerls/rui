@@ -39,7 +39,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
         &self,
         event: &Event,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         let mut c = self.children.len() as i64 - 1;
@@ -52,7 +52,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
         })
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
         let mut c = 0;
         self.children.foreach_view(&mut |child| {
             path.push(c);
@@ -201,7 +201,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
         }
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
         let mut c = 0;
         self.children.foreach_view(&mut |child| {
             path.push(c);
@@ -213,7 +213,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
         })
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
         let mut c = 0;
         let mut hit = None;
         self.children.foreach_view(&mut |child| {
@@ -231,7 +231,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
         hit
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
         let mut c = 0;
         self.children.foreach_view(&mut |child| {
             path.push(c);
@@ -241,7 +241,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
         });
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
         map.push(cx.view_id(path));
         let mut c = 0;
         self.children.foreach_view(&mut |child| {
@@ -256,7 +256,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         let mut c = 0;

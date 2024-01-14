@@ -11,13 +11,13 @@ impl<S, V, F> View for EnvView<S, V, F>
 where
     V: View,
     S: Clone + Default + 'static,
-    F: Fn(S, &mut Context) -> V + 'static,
+    F: Fn(S, &mut Context<dyn renderers::Renderer>) -> V + 'static,
 {
     fn process(
         &self,
         event: &Event,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         path.push(0);
@@ -25,7 +25,7 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
         path.push(0);
         (self.func)(args.init_env(&S::default), args).draw(path, args);
         path.pop();
@@ -38,26 +38,26 @@ where
         sz
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
         path.push(0);
         (self.func)(cx.init_env(&S::default), cx).dirty(path, xform, cx);
         path.pop();
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
         path.push(0);
         let vid = (self.func)(cx.init_env(&S::default), cx).hittest(path, pt, cx);
         path.pop();
         vid
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
         path.push(0);
         (self.func)(cx.init_env(&S::default), cx).commands(path, cx, cmds);
         path.pop();
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
         map.push(cx.view_id(path));
         path.push(0);
         (self.func)(cx.init_env(&S::default), cx).gc(path, cx, map);
@@ -67,7 +67,7 @@ where
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         path.push(0);
@@ -80,7 +80,7 @@ where
 impl<S, V, F> private::Sealed for EnvView<S, V, F> {}
 
 /// Reads from the environment.
-pub fn env<S: Clone + Default + 'static, V: View, F: Fn(S, &mut Context) -> V + 'static>(
+pub fn env<S: Clone + Default + 'static, V: View, F: Fn(S, &mut Context<dyn renderers::Renderer>) -> V + 'static>(
     f: F,
 ) -> impl View {
     EnvView {
@@ -115,7 +115,7 @@ where
         &self,
         event: &Event,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         let old = cx.set_env(&self.env_val);
@@ -125,7 +125,7 @@ where
         old.and_then(|s| cx.set_env(&s));
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
         let old = args.set_env(&self.env_val);
         path.push(0);
         self.child.draw(path, args);
@@ -142,7 +142,7 @@ where
         sz
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
         let old = cx.set_env(&self.env_val);
         path.push(0);
         self.child.dirty(path, xform, cx);
@@ -150,7 +150,7 @@ where
         old.and_then(|s| cx.set_env(&s));
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
         let old = cx.set_env(&self.env_val);
         path.push(0);
         let r = self.child.hittest(path, pt, cx);
@@ -159,7 +159,7 @@ where
         r
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
         let old = cx.set_env(&self.env_val);
         path.push(0);
         self.child.commands(path, cx, cmds);
@@ -167,7 +167,7 @@ where
         old.and_then(|s| cx.set_env(&s));
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
         let old = cx.set_env(&self.env_val);
         path.push(0);
         self.child.gc(path, cx, map);
@@ -178,7 +178,7 @@ where
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context,
+        cx: &mut Context<dyn renderers::Renderer>,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         let old = cx.set_env(&self.env_val);

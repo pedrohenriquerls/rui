@@ -142,31 +142,31 @@ pub fn text_editor(text: impl Binding<String>) -> impl View {
     focus(move |has_focus| {
         state(TextEditorState::new, move |state, cx| {
             let cursor = cx[state].cursor;
-            canvas(move |cx, rect, vger| {
-                vger.translate([0.0, rect.height()]);
-                let font_size = 18;
-                let break_width = Some(rect.width());
+            canvas(move |args, rect| {
+                // vger.translate([0.0, rect.height()]);
+                // let font_size = 18;
+                // let break_width = Some(rect.width());
 
-                vger.text(text.get(cx), font_size, TEXT_COLOR, break_width);
+                // vger.text(text.get(cx), font_size, TEXT_COLOR, break_width);
 
-                if has_focus {
-                    let rects = vger.glyph_positions(text.get(cx), font_size, break_width);
-                    let lines = vger.line_metrics(text.get(cx), font_size, break_width);
-                    let glyph_rect_paint = vger.color_paint(vger::Color::MAGENTA);
-                    let p = if cursor == rects.len() {
-                        if let Some(r) = rects.last() {
-                            [r.origin.x + r.size.width, r.origin.y].into()
-                        } else {
-                            [0.0, -20.0].into()
-                        }
-                    } else {
-                        rects[cursor].origin
-                    };
-                    vger.fill_rect(LocalRect::new(p, [2.0, 20.0].into()), 0.0, glyph_rect_paint);
+                // if has_focus {
+                //     let rects = vger.glyph_positions(text.get(cx), font_size, break_width);
+                //     let lines = vger.line_metrics(text.get(cx), font_size, break_width);
+                //     let glyph_rect_paint = vger.color_paint(vger::Color::MAGENTA);
+                //     let p = if cursor == rects.len() {
+                //         if let Some(r) = rects.last() {
+                //             [r.origin.x + r.size.width, r.origin.y].into()
+                //         } else {
+                //             [0.0, -20.0].into()
+                //         }
+                //     } else {
+                //         rects[cursor].origin
+                //     };
+                //     vger.fill_rect(LocalRect::new(p, [2.0, 20.0].into()), 0.0, glyph_rect_paint);
 
-                    cx[state].glyph_rects = rects;
-                    cx[state].lines = lines;
-                }
+                //     cx[state].glyph_rects = rects;
+                //     cx[state].lines = lines;
+                // }
             })
             .key(move |cx, k| {
                 if has_focus {

@@ -93,24 +93,24 @@ async fn setup(window: &Window) -> Setup {
 fn process_event(cx: &mut Context, view: &impl View, event: &Event, window: &Window) {
     cx.process(view, event);
 
-    if cx.23 && !cx.24 {
-        println!("grabbing cursor");
-        window
-            .set_cursor_grab(winit::window::CursorGrabMode::Locked)
-            .or_else(|_e| window.set_cursor_grab(winit::window::CursorGrabMode::Confined))
-            .unwrap();
-        window.set_cursor_visible(false);
-    }
+    // if cx.23 && !cx.24 {
+    //     println!("grabbing cursor");
+    //     window
+    //         .set_cursor_grab(winit::window::CursorGrabMode::Locked)
+    //         .or_else(|_e| window.set_cursor_grab(winit::window::CursorGrabMode::Confined))
+    //         .unwrap();
+    //     window.set_cursor_visible(false);
+    // }
 
-    if !cx.23 && cx.24 {
-        println!("releasing cursor");
-        window
-            .set_cursor_grab(winit::window::CursorGrabMode::None)
-            .unwrap();
-        window.set_cursor_visible(true);
-    }
+    // if !cx.23 && cx.24 {
+    //     println!("releasing cursor");
+    //     window
+    //         .set_cursor_grab(winit::window::CursorGrabMode::None)
+    //         .unwrap();
+    //     window.set_cursor_visible(true);
+    // }
 
-    cx.24 = cx.23;
+    // cx.24 = cx.23;
 }
 
 /// Call this function to run your UI.

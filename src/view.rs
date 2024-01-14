@@ -19,7 +19,7 @@ impl<'a> LayoutArgs<'a> {
 
 pub struct DrawArgs<'a> {
     pub cx: &'a mut Context,
-    pub rd: &'a dyn renderers::Renderer
+    pub rd: &'a mut dyn renderers::Renderer
 }
 
 /// Trait for the unit of UI composition.

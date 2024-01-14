@@ -26,16 +26,17 @@ impl Text {
 
 impl View for Text {
     fn draw(&self, _path: &mut IdPath, args: &mut DrawArgs) {
-        let vger = &mut args.cx.vger;
-        let origin = vger.text_bounds(self.text.as_str(), self.size, None).origin;
+        // let vger = &mut args.cx.vger;
+        // let origin = vger.text_bounds(self.text.as_str(), self.size, None).origin;
 
-        vger.save();
-        vger.translate([-origin.x, -origin.y]);
-        vger.text(self.text.as_str(), self.size, self.color, None);
-        vger.restore();
+        // vger.save();
+        // vger.translate([-origin.x, -origin.y]);
+        // vger.text(self.text.as_str(), self.size, self.color, None);
+        // vger.restore();
     }
     fn layout(&self, _path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        (args.cx.text_bounds)(self.text.as_str(), self.size, None).size
+        LocalSize::zero()
+        // (args.cx.text_bounds)(self.text.as_str(), self.size, None).size
     }
     fn hittest(&self, _path: &mut IdPath, _pt: LocalPoint, _cx: &mut Context) -> Option<ViewId> {
         None
@@ -89,17 +90,18 @@ where
 {
     fn draw(&self, _path: &mut IdPath, args: &mut DrawArgs) {
         let txt = &format!("{}", self);
-        let vger = &mut args.cx.vger;
-        let origin = vger.text_bounds(txt, Text::DEFAULT_SIZE, None).origin;
+        // let vger = &mut args.cx.vger;
+        // let origin = vger.text_bounds(txt, Text::DEFAULT_SIZE, None).origin;
 
-        vger.save();
-        vger.translate([-origin.x, -origin.y]);
-        vger.text(txt, Text::DEFAULT_SIZE, TEXT_COLOR, None);
-        vger.restore();
+        // vger.save();
+        // vger.translate([-origin.x, -origin.y]);
+        // vger.text(txt, Text::DEFAULT_SIZE, TEXT_COLOR, None);
+        // vger.restore();
     }
     fn layout(&self, _path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
         let txt = &format!("{}", self);
-        (args.cx.text_bounds)(txt, Text::DEFAULT_SIZE, None).size
+        LocalSize::zero()
+        // (args.cx.text_bounds)(txt, Text::DEFAULT_SIZE, None).size
     }
 
     fn access(

@@ -39,3 +39,49 @@ pub trait Renderer {
 
     fn finish(&mut self) -> Option<DynamicImage>;
 }
+
+pub struct EmptyRenderer {}
+
+impl Default for EmptyRenderer {
+    fn default() -> Self {
+        EmptyRenderer {  }
+    }
+}
+
+impl Renderer for EmptyRenderer {
+    fn begin(&mut self, capture: bool) {
+        todo!()
+    }
+
+    fn transform(&mut self, transform: LocalToWorld) {
+        todo!()
+    }
+
+    fn set_z_index(&mut self, z_index: i32) {
+        todo!()
+    }
+
+    fn clip(&mut self, shape: Shape) {
+        todo!()
+    }
+
+    fn clear_clip(&mut self) {
+        todo!()
+    }
+
+    fn stroke(&mut self, shape: Shape, brush: Paint, width: f32) {
+        todo!()
+    }
+
+    fn fill(&mut self, path: Shape, brush: Paint, blur_radius: f32) {
+        todo!()
+    }
+
+    fn draw_text(&mut self, layout: &TextLayout, pos: LocalPoint) {
+        todo!()
+    }
+
+    fn finish(&mut self) -> Option<DynamicImage> {
+        todo!()
+    }
+}

@@ -1,7 +1,6 @@
 use crate::*;
-use renderers::{VgerRenderer, Renderer};
+use renderers::{EmptyRenderer, Renderer};
 use euclid::*;
-use winit::window::Window;
 use std::any::Any;
 use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
@@ -51,8 +50,8 @@ pub struct RenderInfo<'a> {
 
 /// The Context stores all UI state. A user of the library
 /// shouldn't have to interact with it directly.
-pub struct Context {
-    pub renderer: VgerRenderer,
+pub struct Context<T: Renderer> {
+    pub renderer: T,
     /// Layout information for all views.
     layout: HashMap<IdPath, LayoutBox>,
 
@@ -125,16 +124,16 @@ pub struct Context {
     pub(crate) prev_grab_cursor: bool,
 }
 
-// impl Default for Context {
-//     fn default() -> Self {
-//         Self::new(None)
-//     }
-// }
+impl Default for Context<dyn Renderer> {
+    fn default() -> Self {
+        Self::new(&EmptyRenderer::default())
+    }
+}
 
-impl Context {
-    pub fn new(window: &Window) -> Self {
+impl Context<dyn Renderer> {
+    pub fn new(renderer: &impl Renderer) -> Self {
         Self {
-            renderer: VgerRenderer::new(window, 0, 0,0.0).unwrap(),
+            renderer: renderer,
             layout: HashMap::new(),
             view_ids: HashMap::new(),
             next_id: ViewId { id: 0 },
@@ -418,7 +417,7 @@ impl Context {
     }
 }
 
-impl<S> ops::Index<StateHandle<S>> for Context
+impl<S> ops::Index<StateHandle<S>> for Context<dyn Renderer>
 where
     S: 'static,
 {
@@ -429,7 +428,7 @@ where
     }
 }
 
-impl<S> ops::IndexMut<StateHandle<S>> for Context
+impl<S> ops::IndexMut<StateHandle<S>> for Context<dyn Renderer>
 where
     S: 'static,
 {

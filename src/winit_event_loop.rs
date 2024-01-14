@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{*, renderers::VgerRenderer};
 
 use futures::executor::block_on;
 use std::{
@@ -16,28 +16,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-type WorkQueue = VecDeque<Box<dyn FnOnce(&mut Context) + Send>>;
-
-#[cfg(not(target_arch = "wasm32"))]
-lazy_static! {
-    /// Allows us to wake the event loop whenever we want.
-    static ref GLOBAL_EVENT_LOOP_PROXY: Mutex<Option<EventLoopProxy<()>>> = Mutex::new(None);
-
-    static ref GLOBAL_WORK_QUEUE: Mutex<WorkQueue> = Mutex::new(WorkQueue::new());
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-pub fn on_main(f: impl FnOnce(&mut Context) + Send + 'static) {
-    GLOBAL_WORK_QUEUE.lock().unwrap().push_back(Box::new(f));
-
-    // Wake up the event loop.
-    let opt_proxy = GLOBAL_EVENT_LOOP_PROXY.lock().unwrap();
-    if let Some(proxy) = &*opt_proxy {
-        if let Err(err) = proxy.send_event(()) {
-            println!("error waking up event loop: {:?}", err);
-        }
-    }
-}
+type WorkQueue = VecDeque<Box<dyn FnOnce(&mut Context<VgerRenderer>) + Send>>;
 
 struct Setup {
     size: PhysicalSize<u32>,
@@ -111,10 +90,10 @@ async fn setup(window: &Window) -> Setup {
     }
 }
 
-fn process_event(cx: &mut Context, view: &impl View, event: &Event, window: &Window) {
+fn process_event(cx: &mut Context<VgerRenderer>, view: &impl View, event: &Event, window: &Window) {
     cx.process(view, event);
 
-    if cx.grab_cursor && !cx.prev_grab_cursor {
+    if cx.23 && !cx.24 {
         println!("grabbing cursor");
         window
             .set_cursor_grab(winit::window::CursorGrabMode::Locked)
@@ -123,7 +102,7 @@ fn process_event(cx: &mut Context, view: &impl View, event: &Event, window: &Win
         window.set_cursor_visible(false);
     }
 
-    if !cx.grab_cursor && cx.prev_grab_cursor {
+    if !cx.23 && cx.24 {
         println!("releasing cursor");
         window
             .set_cursor_grab(winit::window::CursorGrabMode::None)
@@ -131,7 +110,7 @@ fn process_event(cx: &mut Context, view: &impl View, event: &Event, window: &Win
         window.set_cursor_visible(true);
     }
 
-    cx.prev_grab_cursor = cx.grab_cursor;
+    cx.24 = cx.23;
 }
 
 /// Call this function to run your UI.
@@ -141,8 +120,9 @@ pub fn rui(view: impl View) {
     let mut window_title = String::from("rui");
     let builder = WindowBuilder::new().with_title(&window_title);
     let window = builder.build(&event_loop).unwrap();
+    let renderer = VgerRenderer::new(&window, 0, 0,0.0).unwrap();
 
-    let mut cx = Context::new(&window);
+    let mut cx = Context::new(&renderer);
     let mut mouse_position = LocalPoint::zero();
 
     let mut commands: Vec<CommandInfo> = Vec::new();
@@ -187,19 +167,19 @@ pub fn rui(view: impl View) {
                 // config.width = size.width.max(1);
                 // config.height = size.height.max(1);
                 // surface.configure(&device, &config);
-                cx.renderer.resize(size.width.max(1), size.height.max(1), 1.0);
+                cx.0.resize(size.width.max(1), size.height.max(1), 1.0);
                 window.request_redraw();
             }
             WEvent::UserEvent(_) => {
                 // println!("received user event");
 
                 // Process the work queue.
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    while let Some(f) = GLOBAL_WORK_QUEUE.lock().unwrap().pop_front() {
-                        f(&mut cx);
-                    }
-                }
+                // #[cfg(not(target_arch = "wasm32"))]
+                // {
+                //     while let Some(f) = GLOBAL_WORK_QUEUE.lock().unwrap().pop_front() {
+                //         f(&mut cx);
+                //     }
+                // }
             }
             WEvent::MainEventsCleared => {
                 // Application update code.
@@ -220,9 +200,9 @@ pub fn rui(view: impl View) {
                     window.request_redraw();
                 }
 
-                if cx.window_title != window_title {
-                    window_title = cx.window_title.clone();
-                    window.set_title(&cx.window_title);
+                if cx.10 != window_title {
+                    window_title = cx.10.clone();
+                    window.set_title(&cx.10);
                 }
             }
             WEvent::RedrawRequested(_) => {
@@ -251,7 +231,7 @@ pub fn rui(view: impl View) {
             } => {
                 match state {
                     ElementState::Pressed => {
-                        cx.mouse_button = match button {
+                        cx.7 = match button {
                             WMouseButton::Left => Some(MouseButton::Left),
                             WMouseButton::Right => Some(MouseButton::Right),
                             WMouseButton::Middle => Some(MouseButton::Center),
@@ -264,7 +244,7 @@ pub fn rui(view: impl View) {
                         process_event(&mut cx, &view, &event, &window)
                     }
                     ElementState::Released => {
-                        cx.mouse_button = None;
+                        cx.7 = None;
                         let event = Event::TouchEnd {
                             id: 0,
                             position: mouse_position,
@@ -289,11 +269,11 @@ pub fn rui(view: impl View) {
                 let scale = window.scale_factor() as f32;
                 let position = [
                     location.x as f32 / scale,
-                    (cx.renderer.config.height as f32 - location.y as f32) / scale,
+                    (cx.0.config.height as f32 - location.y as f32) / scale,
                 ]
                 .into();
 
-                let delta = position - cx.previous_position[0];
+                let delta = position - cx.6[0];
 
                 // TODO: Multi-Touch management
                 let event = match phase {
@@ -319,7 +299,7 @@ pub fn rui(view: impl View) {
                 let scale = window.scale_factor() as f32;
                 mouse_position = [
                     position.x as f32 / scale,
-                    (cx.renderer.config.height as f32 - position.y as f32) / scale,
+                    (cx.0.config.height as f32 - position.y as f32) / scale,
                 ]
                 .into();
                 // let event = Event::TouchMove {
@@ -338,124 +318,124 @@ pub fn rui(view: impl View) {
                         let key = match code {
                             // VirtualKeyCode::Character(c) => Some(Key::Character(c)),
                             VirtualKeyCode::Key1 => {
-                                Some(Key::Character(if cx.key_mods.shift { '!' } else { '1' }))
+                                Some(Key::Character(if cx.8.shift { '!' } else { '1' }))
                             }
                             VirtualKeyCode::Key2 => {
-                                Some(Key::Character(if cx.key_mods.shift { '@' } else { '2' }))
+                                Some(Key::Character(if cx.8.shift { '@' } else { '2' }))
                             }
                             VirtualKeyCode::Key3 => {
-                                Some(Key::Character(if cx.key_mods.shift { '#' } else { '3' }))
+                                Some(Key::Character(if cx.8.shift { '#' } else { '3' }))
                             }
                             VirtualKeyCode::Key4 => {
-                                Some(Key::Character(if cx.key_mods.shift { '$' } else { '4' }))
+                                Some(Key::Character(if cx.8.shift { '$' } else { '4' }))
                             }
                             VirtualKeyCode::Key5 => {
-                                Some(Key::Character(if cx.key_mods.shift { '%' } else { '5' }))
+                                Some(Key::Character(if cx.8.shift { '%' } else { '5' }))
                             }
                             VirtualKeyCode::Key6 => {
-                                Some(Key::Character(if cx.key_mods.shift { '^' } else { '6' }))
+                                Some(Key::Character(if cx.8.shift { '^' } else { '6' }))
                             }
                             VirtualKeyCode::Key7 => {
-                                Some(Key::Character(if cx.key_mods.shift { '&' } else { '7' }))
+                                Some(Key::Character(if cx.8.shift { '&' } else { '7' }))
                             }
                             VirtualKeyCode::Key8 => {
-                                Some(Key::Character(if cx.key_mods.shift { '*' } else { '8' }))
+                                Some(Key::Character(if cx.8.shift { '*' } else { '8' }))
                             }
                             VirtualKeyCode::Key9 => {
-                                Some(Key::Character(if cx.key_mods.shift { '(' } else { '9' }))
+                                Some(Key::Character(if cx.8.shift { '(' } else { '9' }))
                             }
                             VirtualKeyCode::Key0 => {
-                                Some(Key::Character(if cx.key_mods.shift { ')' } else { '0' }))
+                                Some(Key::Character(if cx.8.shift { ')' } else { '0' }))
                             }
                             VirtualKeyCode::A => {
-                                Some(Key::Character(if cx.key_mods.shift { 'A' } else { 'a' }))
+                                Some(Key::Character(if cx.8.shift { 'A' } else { 'a' }))
                             }
                             VirtualKeyCode::B => {
-                                Some(Key::Character(if cx.key_mods.shift { 'B' } else { 'b' }))
+                                Some(Key::Character(if cx.8.shift { 'B' } else { 'b' }))
                             }
                             VirtualKeyCode::C => {
-                                Some(Key::Character(if cx.key_mods.shift { 'C' } else { 'c' }))
+                                Some(Key::Character(if cx.8.shift { 'C' } else { 'c' }))
                             }
                             VirtualKeyCode::D => {
-                                Some(Key::Character(if cx.key_mods.shift { 'D' } else { 'd' }))
+                                Some(Key::Character(if cx.8.shift { 'D' } else { 'd' }))
                             }
                             VirtualKeyCode::E => {
-                                Some(Key::Character(if cx.key_mods.shift { 'E' } else { 'e' }))
+                                Some(Key::Character(if cx.8.shift { 'E' } else { 'e' }))
                             }
                             VirtualKeyCode::F => {
-                                Some(Key::Character(if cx.key_mods.shift { 'F' } else { 'f' }))
+                                Some(Key::Character(if cx.8.shift { 'F' } else { 'f' }))
                             }
                             VirtualKeyCode::G => {
-                                Some(Key::Character(if cx.key_mods.shift { 'G' } else { 'g' }))
+                                Some(Key::Character(if cx.8.shift { 'G' } else { 'g' }))
                             }
                             VirtualKeyCode::H => {
-                                Some(Key::Character(if cx.key_mods.shift { 'H' } else { 'h' }))
+                                Some(Key::Character(if cx.8.shift { 'H' } else { 'h' }))
                             }
                             VirtualKeyCode::I => {
-                                Some(Key::Character(if cx.key_mods.shift { 'I' } else { 'i' }))
+                                Some(Key::Character(if cx.8.shift { 'I' } else { 'i' }))
                             }
                             VirtualKeyCode::J => {
-                                Some(Key::Character(if cx.key_mods.shift { 'J' } else { 'j' }))
+                                Some(Key::Character(if cx.8.shift { 'J' } else { 'j' }))
                             }
                             VirtualKeyCode::K => {
-                                Some(Key::Character(if cx.key_mods.shift { 'K' } else { 'k' }))
+                                Some(Key::Character(if cx.8.shift { 'K' } else { 'k' }))
                             }
                             VirtualKeyCode::L => {
-                                Some(Key::Character(if cx.key_mods.shift { 'L' } else { 'l' }))
+                                Some(Key::Character(if cx.8.shift { 'L' } else { 'l' }))
                             }
                             VirtualKeyCode::M => {
-                                Some(Key::Character(if cx.key_mods.shift { 'M' } else { 'm' }))
+                                Some(Key::Character(if cx.8.shift { 'M' } else { 'm' }))
                             }
                             VirtualKeyCode::N => {
-                                Some(Key::Character(if cx.key_mods.shift { 'N' } else { 'n' }))
+                                Some(Key::Character(if cx.8.shift { 'N' } else { 'n' }))
                             }
                             VirtualKeyCode::O => {
-                                Some(Key::Character(if cx.key_mods.shift { 'O' } else { 'o' }))
+                                Some(Key::Character(if cx.8.shift { 'O' } else { 'o' }))
                             }
                             VirtualKeyCode::P => {
-                                Some(Key::Character(if cx.key_mods.shift { 'P' } else { 'p' }))
+                                Some(Key::Character(if cx.8.shift { 'P' } else { 'p' }))
                             }
                             VirtualKeyCode::Q => {
-                                Some(Key::Character(if cx.key_mods.shift { 'Q' } else { 'q' }))
+                                Some(Key::Character(if cx.8.shift { 'Q' } else { 'q' }))
                             }
                             VirtualKeyCode::R => {
-                                Some(Key::Character(if cx.key_mods.shift { 'R' } else { 'r' }))
+                                Some(Key::Character(if cx.8.shift { 'R' } else { 'r' }))
                             }
                             VirtualKeyCode::S => {
-                                Some(Key::Character(if cx.key_mods.shift { 'S' } else { 's' }))
+                                Some(Key::Character(if cx.8.shift { 'S' } else { 's' }))
                             }
                             VirtualKeyCode::T => {
-                                Some(Key::Character(if cx.key_mods.shift { 'T' } else { 't' }))
+                                Some(Key::Character(if cx.8.shift { 'T' } else { 't' }))
                             }
                             VirtualKeyCode::U => {
-                                Some(Key::Character(if cx.key_mods.shift { 'U' } else { 'u' }))
+                                Some(Key::Character(if cx.8.shift { 'U' } else { 'u' }))
                             }
                             VirtualKeyCode::V => {
-                                Some(Key::Character(if cx.key_mods.shift { 'V' } else { 'v' }))
+                                Some(Key::Character(if cx.8.shift { 'V' } else { 'v' }))
                             }
                             VirtualKeyCode::W => {
-                                Some(Key::Character(if cx.key_mods.shift { 'W' } else { 'w' }))
+                                Some(Key::Character(if cx.8.shift { 'W' } else { 'w' }))
                             }
                             VirtualKeyCode::X => {
-                                Some(Key::Character(if cx.key_mods.shift { 'X' } else { 'x' }))
+                                Some(Key::Character(if cx.8.shift { 'X' } else { 'x' }))
                             }
                             VirtualKeyCode::Y => {
-                                Some(Key::Character(if cx.key_mods.shift { 'Y' } else { 'y' }))
+                                Some(Key::Character(if cx.8.shift { 'Y' } else { 'y' }))
                             }
                             VirtualKeyCode::Z => {
-                                Some(Key::Character(if cx.key_mods.shift { 'Z' } else { 'z' }))
+                                Some(Key::Character(if cx.8.shift { 'Z' } else { 'z' }))
                             }
                             VirtualKeyCode::Semicolon => {
-                                Some(Key::Character(if cx.key_mods.shift { ':' } else { ';' }))
+                                Some(Key::Character(if cx.8.shift { ':' } else { ';' }))
                             }
                             VirtualKeyCode::Colon => Some(Key::Character(':')),
                             VirtualKeyCode::Caret => Some(Key::Character('^')),
                             VirtualKeyCode::Asterisk => Some(Key::Character('*')),
                             VirtualKeyCode::Period => {
-                                Some(Key::Character(if cx.key_mods.shift { '>' } else { '.' }))
+                                Some(Key::Character(if cx.8.shift { '>' } else { '.' }))
                             }
                             VirtualKeyCode::Comma => {
-                                Some(Key::Character(if cx.key_mods.shift { '<' } else { ',' }))
+                                Some(Key::Character(if cx.8.shift { '<' } else { ',' }))
                             }
                             VirtualKeyCode::Equals | VirtualKeyCode::NumpadEquals => {
                                 Some(Key::Character('='))
@@ -464,13 +444,13 @@ pub fn rui(view: impl View) {
                                 Some(Key::Character('+'))
                             }
                             VirtualKeyCode::Minus | VirtualKeyCode::NumpadSubtract => {
-                                Some(Key::Character(if cx.key_mods.shift { '_' } else { '-' }))
+                                Some(Key::Character(if cx.8.shift { '_' } else { '-' }))
                             }
                             VirtualKeyCode::Slash | VirtualKeyCode::NumpadDivide => {
-                                Some(Key::Character(if cx.key_mods.shift { '?' } else { '/' }))
+                                Some(Key::Character(if cx.8.shift { '?' } else { '/' }))
                             }
                             VirtualKeyCode::Grave => {
-                                Some(Key::Character(if cx.key_mods.shift { '~' } else { '`' }))
+                                Some(Key::Character(if cx.8.shift { '~' } else { '`' }))
                             }
                             VirtualKeyCode::Return => Some(Key::Enter),
                             VirtualKeyCode::Tab => Some(Key::Tab),
@@ -512,7 +492,7 @@ pub fn rui(view: impl View) {
                 event: WindowEvent::ModifiersChanged(mods),
                 ..
             } => {
-                cx.key_mods = KeyboardModifiers {
+                cx.8 = KeyboardModifiers {
                     shift: mods.shift(),
                     control: mods.ctrl(),
                     alt: mods.alt(),

@@ -58,27 +58,25 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
             path.push(c);
             let layout_box = args.cx.get_layout(path);
 
-            args.cx.vger.save();
+            // args.cx.vger.save();
 
-            args.cx.vger.translate(layout_box.offset);
+            // args.cx.vger.translate(layout_box.offset);
 
             (*child).draw(path, args);
             c += 1;
 
             if DEBUG_LAYOUT {
-                let paint = args.cx.vger.color_paint(CONTROL_BACKGROUND);
-                args.cx.vger.stroke_rect(
-                    layout_box.rect.min(),
-                    layout_box.rect.max(),
-                    0.0,
-                    1.0,
+                let paint = Paint::Color(CONTROL_BACKGROUND);
+                args.rd.stroke(
+                    Shape::Rectangle(&layout_box.rect, 0.0),
                     paint,
+                    0.0,
                 );
             }
 
             path.pop();
 
-            args.cx.vger.restore();
+            // args.rd.restore();
         })
     }
 
@@ -87,7 +85,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
 
         match D::ORIENTATION {
             StackOrientation::Horizontal => {
-                let proposed_child_size = LocalSize::new(args.cx.sz.width / n, args.cx.sz.height);
+                let proposed_child_size = LocalSize::new(args.sz.width / n, args.sz.height);
 
                 let mut child_sizes = [None; VIEW_TUPLE_MAX_ELEMENTS];
                 self.layout_fixed_children(path, proposed_child_size, args, &mut child_sizes);
@@ -103,7 +101,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
                 let n = self.children.len();
                 let mut flex_length = 0.0;
                 let length = stack_layout(
-                    args.cx.sz.width,
+                    args.sz.width,
                     &child_sizes_1d[0..n],
                     &mut intervals[0..n],
                     &mut flex_length,
@@ -111,7 +109,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
 
                 self.layout_flex_children(
                     path,
-                    [flex_length, args.cx.sz.height].into(),
+                    [flex_length, args.sz.height].into(),
                     args,
                     &mut child_sizes,
                 );
@@ -138,7 +136,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
                 [length, max_height].into()
             }
             StackOrientation::Vertical => {
-                let proposed_child_size = LocalSize::new(args.cx.sz.width, args.cx.sz.height / n);
+                let proposed_child_size = LocalSize::new(args.sz.width, args.sz.height / n);
                 let mut child_sizes = [None; VIEW_TUPLE_MAX_ELEMENTS];
                 self.layout_fixed_children(path, proposed_child_size, args, &mut child_sizes);
 
@@ -153,7 +151,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
                 let n = self.children.len();
                 let mut flex_length = 0.0;
                 let length = stack_layout(
-                    args.cx.sz.height,
+                    args.sz.height,
                     &child_sizes_1d[0..n],
                     &mut intervals[0..n],
                     &mut flex_length,
@@ -161,7 +159,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
 
                 self.layout_flex_children(
                     path,
-                    [args.cx.sz.width, flex_length].into(),
+                    [args.sz.width, flex_length].into(),
                     args,
                     &mut child_sizes,
                 );
@@ -196,7 +194,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
                     path.pop();
                     c += 1;
                 });
-                args.cx.sz
+                args.sz
             }
         }
     }
@@ -297,7 +295,7 @@ impl<VT: ViewTuple, D: StackDirection> Stack<VT, D> {
             path.push(c);
             if !child.is_flexible() {
                 child_sizes[c as usize] =
-                    Some(child.layout(path, &mut args.cx.size(proposed_child_size)))
+                    Some(child.layout(path, &mut args.size(proposed_child_size)))
             }
             path.pop();
             c += 1;
@@ -315,7 +313,7 @@ impl<VT: ViewTuple, D: StackDirection> Stack<VT, D> {
         self.children.foreach_view(&mut |child| {
             path.push(c);
             if child.is_flexible() {
-                child_sizes[c as usize] = Some(child.layout(path, &mut args.cx.size(flex_size)));
+                child_sizes[c as usize] = Some(child.layout(path, &mut args.size(flex_size)));
             }
             path.pop();
             c += 1;

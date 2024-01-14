@@ -72,7 +72,7 @@ where
         let id = args.cx.view_id(path);
         args.cx.init_state(id, &self.default);
         path.push(0);
-        (self.func)(StateHandle::new(id), args).draw(path, args);
+        (self.func)(StateHandle::new(id), args.cx).draw(path, args);
         path.pop();
     }
 
@@ -100,7 +100,7 @@ where
         if compute_layout {
             args.cx.id_stack.push(id);
 
-            let view = (self.func)(StateHandle::new(id), args);
+            let view = (self.func)(StateHandle::new(id), args.cx);
 
             path.push(0);
             let child_size = view.layout(path, args);
@@ -108,7 +108,7 @@ where
             // Compute layout dependencies.
             let mut deps = vec![];
             deps.append(&mut args.cx.id_stack.clone());
-            view.gc(path, args, &mut deps);
+            view.gc(path, args.cx, &mut deps);
 
             path.pop();
 

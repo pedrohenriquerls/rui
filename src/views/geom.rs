@@ -26,7 +26,7 @@ where
 
     fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         let rect = args.cx.get_layout(path).rect;
-        (self.func)(args, rect.size, args.cx.vger.current_transform());
+        (self.func)(args.cx, rect.size, args.rd.current_tranform());
         path.push(0);
         self.child.draw(path, args);
         path.pop();

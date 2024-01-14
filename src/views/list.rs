@@ -40,13 +40,11 @@ where
             path.push(hh(child));
             let offset = args.cx.get_layout(path).offset;
 
-            args.cx.vger.save();
-
-            args.cx.vger.translate(offset);
+            // args.rd.translate(offset);
 
             ((self.func)(child)).draw(path, args);
 
-            args.cx.vger.restore();
+            // args.cx.vger.restore();
             path.pop();
         }
     }

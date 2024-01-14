@@ -14,6 +14,8 @@ pub trait Renderer {
 
     fn transform(&mut self, transform: LocalToWorld);
 
+    fn current_tranform(&self) -> LocalToWorld;
+
     fn set_z_index(&mut self, z_index: i32);
 
     /// Clip to a [`Shape`].
@@ -49,6 +51,9 @@ impl Default for EmptyRenderer {
 }
 
 impl Renderer for EmptyRenderer {
+    fn current_tranform(&self) -> LocalToWorld {
+        LocalToWorld::default()
+    }
     fn begin(&mut self, capture: bool) {
         todo!()
     }

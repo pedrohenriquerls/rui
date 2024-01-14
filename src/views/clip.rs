@@ -51,7 +51,7 @@ where
         args.cx.update_layout(
             path,
             LayoutBox {
-                rect: LocalRect::new(LocalPoint::zero(), args.cx.sz),
+                rect: LocalRect::new(LocalPoint::zero(), args.sz),
                 offset: LocalOffset::zero(),
             },
         );

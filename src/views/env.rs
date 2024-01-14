@@ -27,13 +27,13 @@ where
 
     fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         path.push(0);
-        (self.func)(args.cx.init_env(&S::default), args).draw(path, args);
+        (self.func)(args.cx.init_env(&S::default), args.cx).draw(path, args);
         path.pop();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
         path.push(0);
-        let sz = (self.func)(args.cx.init_env(&S::default), args).layout(path, args);
+        let sz = (self.func)(args.cx.init_env(&S::default), args.cx).layout(path, args);
         path.pop();
         sz
     }

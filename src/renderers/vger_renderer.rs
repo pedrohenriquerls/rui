@@ -253,6 +253,9 @@ impl VgerRenderer {
 }
 
 impl Renderer for VgerRenderer {
+    fn current_tranform(&self) -> LocalToWorld {
+        self.transform
+    }
     fn begin(&mut self, capture: bool) {
         // Switch to the capture Vger if needed
         if self.capture != capture {

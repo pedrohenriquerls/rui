@@ -25,7 +25,7 @@ impl View for Circle {
     fn draw(&self, path: &mut IdPath, args: &mut Context) {
         let (point, radius) = self.geom(path, args);
         let circle = Shape::Circle(&point, radius);
-        args.renderer.fill(&circle, self.paint, 0.0);
+        args.renderer.fill(circle, self.paint, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
@@ -95,7 +95,7 @@ impl Rectangle {
 impl View for Rectangle {
     fn draw(&self, path: &mut IdPath, args: &mut Context) {
         let rect = Shape::Rectangle(&self.geom(path, args), self.corner_radius);
-        args.renderer.fill(&rect, self.paint, 0.0);
+        args.renderer.fill(rect, self.paint, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {

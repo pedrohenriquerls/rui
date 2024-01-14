@@ -17,17 +17,17 @@ pub trait Renderer {
     fn set_z_index(&mut self, z_index: i32);
 
     /// Clip to a [`Shape`].
-    fn clip(&mut self, shape: &Shape);
+    fn clip(&mut self, shape: Shape);
 
     fn clear_clip(&mut self);
 
     /// Stroke a [`Shape`].
-    fn stroke<'b>(&mut self, shape: &Shape, brush: Paint, width: f32);
+    fn stroke(&mut self, shape: Shape, brush: Paint, width: f32);
 
     /// Fill a [`Shape`], using the [non-zero fill rule].
     ///
     /// [non-zero fill rule]: https://en.wikipedia.org/wiki/Nonzero-rule
-    fn fill<'b>(&mut self, path: &Shape, brush: Paint, blur_radius: f32);
+    fn fill(&mut self, path: Shape, brush: Paint, blur_radius: f32);
 
     /// Draw a [`TextLayout`].
     ///

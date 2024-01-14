@@ -125,16 +125,16 @@ pub struct Context {
     pub(crate) prev_grab_cursor: bool,
 }
 
-impl Default for Context {
-    fn default() -> Self {
-        Self::new(Window::default())
-    }
-}
+// impl Default for Context {
+//     fn default() -> Self {
+//         Self::new(None)
+//     }
+// }
 
 impl Context {
-    pub fn new(window: &mut Window) -> Self {
+    pub fn new(window: &Window) -> Self {
         Self {
-            renderer: renderers::VgerRenderer::new(&window, 0, 0,0.0).unwrap(),
+            renderer: renderers::VgerRenderer::new(window, 0, 0,0.0).unwrap(),
             layout: HashMap::new(),
             view_ids: HashMap::new(),
             next_id: ViewId { id: 0 },
@@ -269,7 +269,9 @@ impl Context {
         if self.render_dirty {
             let xf = WorldToLocal::identity();
             for rect in self.dirty_region.rects() {
-                self.renderer.fill(&Shape::Rectangle(&rect, 0.0), Paint::Color(RED_HIGHLIGHT), scale);
+                // let local_rect = LocalRect::new([xf.transform_point(rect.min()), xf.transform_point(rect.max())].into(), rect.size.into());
+                let local_rect = LocalRect::default();
+                self.renderer.stroke(Shape::Rectangle(&local_rect, 0.0), Paint::Color(RED_HIGHLIGHT), scale);
             }
         }
 
@@ -413,10 +415,6 @@ impl Context {
         let holder = self.state_map.get_mut(&id.id).unwrap();
         holder.dirty = true;
         holder.state.downcast_mut::<S>().unwrap()
-    }
-
-    pub(crate) fn render_fill(&self, rect: Shape<'_>, paint: Paint, arg: f64) -> _ {
-        todo!()
     }
 }
 

@@ -38,7 +38,7 @@ impl VgerRenderer {
         window: &W,
         width: u32,
         height: u32,
-        scale: f64,
+        scale: f32,
     ) -> Result<Self> {
         let instance = wgpu::Instance::default();
 
@@ -275,7 +275,7 @@ impl Renderer for VgerRenderer {
         );
     }
 
-    fn stroke<'b>(&mut self, shape: &Shape, brush: Paint, width: f32) {
+    fn stroke(&mut self, shape: Shape, brush: Paint, width: f32) {
         let paint = match self.brush_to_paint(brush) {
             Some(paint) => paint,
             None => return,
@@ -287,7 +287,7 @@ impl Renderer for VgerRenderer {
                 self.vger.stroke_rect(
                     rect.min(),
                     rect.max(),
-                    *corner_radius,
+                    corner_radius,
                     width,
                     paint,
                 );
@@ -304,7 +304,7 @@ impl Renderer for VgerRenderer {
         // }
     }
 
-    fn fill<'b>(&mut self, path: &Shape, brush: Paint, blur_radius: f32) {
+    fn fill(&mut self, path: Shape, brush: Paint, blur_radius: f32) {
         let paint = match self.brush_to_paint(brush) {
             Some(paint) => paint,
             None => return,
@@ -314,13 +314,13 @@ impl Renderer for VgerRenderer {
             Shape::Rectangle(rect, corner_radius) => {
                 self.vger.fill_rect(
                     *rect,
-                    *corner_radius,
+                    corner_radius,
                     paint,
-                    (blur_radius * self.scale) as f32,
+                    blur_radius * self.scale,
                 );
             },
             Shape::Circle(center, radius) => {
-                self.vger.fill_circle(*center, *radius, paint)
+                self.vger.fill_circle(*center, radius, paint)
             },
             // None => self.vger.fill(paint)
          }

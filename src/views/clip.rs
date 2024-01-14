@@ -34,8 +34,8 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let rect = self.geom(path, args.cx);
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+        let rect = self.geom(path, args);
 
         args.vger.save();
         args.vger.scissor(rect);
@@ -49,7 +49,7 @@ where
         path.push(0);
         self.child.layout(path, args);
         path.pop();
-        args.cx.update_layout(
+        args.update_layout(
             path,
             LayoutBox {
                 rect: LocalRect::new(LocalPoint::zero(), args.sz),

@@ -27,7 +27,7 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
         path.push(1);
         self.background.draw(path, args);
         path.pop();

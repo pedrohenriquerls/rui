@@ -24,9 +24,9 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let rect = args.cx.get_layout(path).rect;
-        (self.func)(args.cx, rect.size, args.vger.current_transform());
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+        let rect = args.get_layout(path).rect;
+        (self.func)(args, rect.size, args.vger.current_transform());
         path.push(0);
         self.child.draw(path, args);
         path.pop();
@@ -37,7 +37,7 @@ where
         let sz = self.child.layout(path, args);
         path.pop();
 
-        args.cx.update_layout(
+        args.update_layout(
             path,
             LayoutBox {
                 rect: LocalRect::new(LocalPoint::zero(), sz),

@@ -24,7 +24,7 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
         args.vger.save();
         args.vger.translate([self.padding, self.padding]);
         path.push(0);

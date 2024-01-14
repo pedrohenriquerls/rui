@@ -45,7 +45,7 @@ impl View for AnyView {
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
         path.push(self.id_hash());
         self.child.draw(path, args);
         path.pop();

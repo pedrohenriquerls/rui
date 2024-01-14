@@ -24,15 +24,15 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
         path.push(0);
-        (self.func)(self.value.clone(), args.cx).draw(path, args);
+        (self.func)(self.value.clone(), args).draw(path, args);
         path.pop();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
         path.push(0);
-        let sz = (self.func)(self.value.clone(), args.cx).layout(path, args);
+        let sz = (self.func)(self.value.clone(), args).layout(path, args);
         path.pop();
         sz
     }

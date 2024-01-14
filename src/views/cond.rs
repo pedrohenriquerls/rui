@@ -31,7 +31,7 @@ where
         }
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
         if self.cond {
             path.push(0);
             self.if_true.draw(path, args);

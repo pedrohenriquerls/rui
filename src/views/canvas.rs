@@ -10,16 +10,16 @@ impl<F> View for Canvas<F>
 where
     F: Fn(&mut Context, LocalRect, &mut Vger) + 'static,
 {
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let rect = args.cx.get_layout(path).rect;
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+        let rect = args.get_layout(path).rect;
 
         args.vger.save();
-        (self.func)(args.cx, rect, args.vger);
+        (self.func)(args, rect, args.vger);
         args.vger.restore();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        args.cx.update_layout(
+        args.update_layout(
             path,
             LayoutBox {
                 rect: LocalRect::new(LocalPoint::zero(), args.sz),

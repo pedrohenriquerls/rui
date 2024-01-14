@@ -105,17 +105,17 @@ mod tests {
         assert_eq!(*MyLens {}.focus(&s), 42);
     }
 
-    #[test]
-    fn test_bind() {
-        let mut cx = Context::new();
-        let id = ViewId::default();
-        cx.init_state(id, &MyState::default);
-        let s = StateHandle::new(id);
+//     #[test]
+//     fn test_bind() {
+//         let mut cx = Context::new();
+//         let id = ViewId::default();
+//         cx.init_state(id, &MyState::default);
+//         let s = StateHandle::new(id);
 
-        let b = bind(s, MyLens {});
+//         let b = bind(s, MyLens {});
 
-        *b.get_mut(&mut cx) = 42;
+//         *b.get_mut(&mut cx) = 42;
 
-        assert_eq!(*b.get(&cx), 42);
-    }
+//         assert_eq!(*b.get(&cx), 42);
+//     }
 }

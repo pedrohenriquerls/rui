@@ -52,11 +52,11 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
         })
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
         let mut c = 0;
         self.children.foreach_view(&mut |child| {
             path.push(c);
-            let layout_box = args.cx.get_layout(path);
+            let layout_box = args.get_layout(path);
 
             args.vger.save();
 
@@ -131,7 +131,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
                     );
 
                     path.push(c);
-                    args.cx.set_layout_offset(path, child_offset);
+                    args.set_layout_offset(path, child_offset);
                     path.pop();
                 }
 
@@ -182,7 +182,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
                     );
 
                     path.push(c);
-                    args.cx.set_layout_offset(path, child_offset);
+                    args.set_layout_offset(path, child_offset);
                     path.pop();
                 }
 

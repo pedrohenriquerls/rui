@@ -25,7 +25,7 @@ impl Text {
 }
 
 impl View for Text {
-    fn draw(&self, _path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, _path: &mut IdPath, args: &mut Context) {
         let vger = &mut args.vger;
         let origin = vger.text_bounds(self.text.as_str(), self.size, None).origin;
 
@@ -87,7 +87,7 @@ impl<V> View for V
 where
     V: std::fmt::Display + std::fmt::Debug + 'static,
 {
-    fn draw(&self, _path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, _path: &mut IdPath, args: &mut Context) {
         let txt = &format!("{}", self);
         let vger = &mut args.vger;
         let origin = vger.text_bounds(txt, Text::DEFAULT_SIZE, None).origin;

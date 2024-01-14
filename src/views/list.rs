@@ -35,10 +35,10 @@ where
         }
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
         for child in &self.ids {
             path.push(hh(child));
-            let offset = args.cx.get_layout(path).offset;
+            let offset = args.get_layout(path).offset;
 
             args.vger.save();
 
@@ -87,7 +87,7 @@ where
                         VAlignment::Middle,
                     );
 
-                    args.cx.set_layout_offset(path, child_offset);
+                    args.set_layout_offset(path, child_offset);
 
                     path.pop();
 
@@ -133,7 +133,7 @@ where
                         HAlignment::Center,
                     );
 
-                    args.cx.set_layout_offset(path, child_offset);
+                    args.set_layout_offset(path, child_offset);
                     path.pop();
 
                     y -= child_size.height;

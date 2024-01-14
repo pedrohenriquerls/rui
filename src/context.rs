@@ -134,7 +134,7 @@ pub struct Context {
 impl Context {
     pub fn new(window: &Window) -> Self {
         Self {
-            renderer: renderers::VgerRenderer::new(window, 0, 0,0.0).unwrap(),
+            renderer: VgerRenderer::new(window, 0, 0,0.0).unwrap(),
             layout: HashMap::new(),
             view_ids: HashMap::new(),
             next_id: ViewId { id: 0 },

@@ -34,20 +34,20 @@ where
         }
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let id = args.cx.view_id(path);
-        args.cx.set_state(id, self.value.clone());
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+        let id = args.view_id(path);
+        args.set_state(id, self.value.clone());
         path.push(0);
-        (self.func)(StateHandle::new(id), args.cx).draw(path, args);
+        (self.func)(StateHandle::new(id), args).draw(path, args);
         path.pop();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        let id = args.cx.view_id(path);
-        args.cx.set_state(id, self.value.clone());
+        let id = args.view_id(path);
+        args.set_state(id, self.value.clone());
 
         path.push(0);
-        let sz = (self.func)(StateHandle::new(id), args.cx).layout(path, args);
+        let sz = (self.func)(StateHandle::new(id), args).layout(path, args);
         path.pop();
         sz
     }

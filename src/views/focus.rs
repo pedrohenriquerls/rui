@@ -39,17 +39,17 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let id = args.cx.view_id(path);
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+        let id = args.view_id(path);
         path.push(0);
-        (self.func)(Some(id) == args.cx.focused_id).draw(path, args);
+        (self.func)(Some(id) == args.focused_id).draw(path, args);
         path.pop();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        let id = args.cx.view_id(path);
+        let id = args.view_id(path);
         path.push(0);
-        let sz = (self.func)(Some(id) == args.cx.focused_id).layout(path, args);
+        let sz = (self.func)(Some(id) == args.focused_id).layout(path, args);
         path.pop();
         sz
     }

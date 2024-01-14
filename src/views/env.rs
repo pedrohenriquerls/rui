@@ -25,15 +25,15 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
         path.push(0);
-        (self.func)(args.cx.init_env(&S::default), args.cx).draw(path, args);
+        (self.func)(args.init_env(&S::default), args).draw(path, args);
         path.pop();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
         path.push(0);
-        let sz = (self.func)(args.cx.init_env(&S::default), args.cx).layout(path, args);
+        let sz = (self.func)(args.init_env(&S::default), args).layout(path, args);
         path.pop();
         sz
     }
@@ -125,20 +125,20 @@ where
         old.and_then(|s| cx.set_env(&s));
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let old = args.cx.set_env(&self.env_val);
+    fn draw(&self, path: &mut IdPath, args: &mut Context) {
+        let old = args.set_env(&self.env_val);
         path.push(0);
         self.child.draw(path, args);
         path.pop();
-        old.and_then(|s| args.cx.set_env(&s));
+        old.and_then(|s| args.set_env(&s));
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        let old = args.cx.set_env(&self.env_val);
+        let old = args.set_env(&self.env_val);
         path.push(0);
         let sz = self.child.layout(path, args);
         path.pop();
-        old.and_then(|s| args.cx.set_env(&s));
+        old.and_then(|s| args.set_env(&s));
         sz
     }
 

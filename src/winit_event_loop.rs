@@ -141,7 +141,7 @@ pub fn rui(view: impl View) {
     let mut window_title = String::from("rui");
     let builder = WindowBuilder::new().with_title(&window_title);
     let window = builder.build(&event_loop).unwrap();
-    let renderer = VgerRenderer::new(&window, 0, 0,0.0).unwrap();
+    let mut renderer = VgerRenderer::new(&window, 0, 0,0.0).unwrap();
 
     let mut cx = Context::new();
     let mut mouse_position = LocalPoint::zero();

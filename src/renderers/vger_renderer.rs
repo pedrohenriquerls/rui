@@ -296,7 +296,7 @@ impl Renderer for VgerRenderer {
                 );
             },
             Shape::Circle(center, radius) => {},
-            Background => {}
+            Shape::Background => {}
         }
         // } else if let Some(line) = shape.as_line() {
         //     self.vger.stroke_segment(
@@ -326,7 +326,7 @@ impl Renderer for VgerRenderer {
             Shape::Circle(center, radius) => {
                 self.vger.fill_circle(*center, radius, paint)
             },
-            Background => self.vger.fill(paint)
+            Shape::Background => self.vger.fill(paint)
          }
         // } else if let Some(rect) = path.as_rounded_rect() {
         //     self.vger.fill_rect(
@@ -443,7 +443,7 @@ impl Renderer for VgerRenderer {
             Shape::Rectangle(rect, corner) => {
                 self.vger.scissor(self.vger_rect(*rect), (corner * self.scale) as f32);
                 let offset = LocalOffset::new(self.transform.m31, self.transform.m32);
-                self.clip = Some(rect + offset);
+                // self.clip = Some(rect + offset);
             },
             Shape::Circle(point, radius) => {}
             Shape::Background => {}

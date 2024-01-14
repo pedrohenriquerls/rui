@@ -94,8 +94,8 @@ impl Rectangle {
 
 impl View for Rectangle {
     fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let rect = Shape::Rectangle(&self.geom(path, args.cx), self.corner_radius);
-        args.rd.fill(rect, self.paint, 0.0);
+        let rect = self.geom(path, args.cx);
+        args.rd.fill(Shape::Rectangle(&rect, self.corner_radius), self.paint, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {

@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Specifies how a region should be filled.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Paint {
     /// Fill a region with a solid color.
     Color(Color),

@@ -53,7 +53,7 @@ where
         match self.orientation {
             ListOrientation::Horizontal => {
                 let n = self.ids.len() as f32;
-                let proposed_child_size = LocalSize::new(args.cx.sz.width / n, args.cx.sz.height);
+                let proposed_child_size = LocalSize::new(args.sz.width / n, args.sz.height);
 
                 let mut sizes = Vec::<LocalSize>::new();
                 sizes.reserve(self.ids.len());
@@ -62,7 +62,7 @@ where
                 for child in &self.ids {
                     path.push(hh(child));
                     let child_size =
-                        ((self.func)(child)).layout(path, &mut args.cx.size(proposed_child_size));
+                        ((self.func)(child)).layout(path, &mut args.size(proposed_child_size));
                     sizes.push(child_size);
                     path.pop();
 
@@ -96,7 +96,7 @@ where
             }
             ListOrientation::Vertical => {
                 let n = self.ids.len() as f32;
-                let proposed_child_size = LocalSize::new(args.cx.sz.width, args.cx.sz.height / n);
+                let proposed_child_size = LocalSize::new(args.sz.width, args.sz.height / n);
 
                 let mut sizes = Vec::<LocalSize>::new();
                 sizes.reserve(self.ids.len());
@@ -105,7 +105,7 @@ where
                 for child in &self.ids {
                     path.push(hh(child));
                     let child_size =
-                        ((self.func)(child)).layout(path, &mut args.cx.size(proposed_child_size));
+                        ((self.func)(child)).layout(path, &mut args.size(proposed_child_size));
                     sizes.push(child_size);
                     path.pop();
 
@@ -145,7 +145,7 @@ where
                     ((self.func)(child)).layout(path, args);
                     path.pop();
                 }
-                args.cx.sz
+                args.sz
             }
         }
     }

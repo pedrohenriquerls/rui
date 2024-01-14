@@ -35,12 +35,12 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, cx: &mut Context) {
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         path.push(0);
-        self.child.draw(path, cx);
+        self.child.draw(path, args);
         path.pop();
-        if cx.window_title != self.title {
-            cx.window_title = self.title.clone();
+        if args.cx.window_title != self.title {
+            args.cx.window_title = self.title.clone();
         }
     }
 

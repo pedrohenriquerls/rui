@@ -296,6 +296,7 @@ impl Renderer for VgerRenderer {
                 );
             },
             Shape::Circle(center, radius) => {},
+            Background => {}
         }
         // } else if let Some(line) = shape.as_line() {
         //     self.vger.stroke_segment(
@@ -325,7 +326,7 @@ impl Renderer for VgerRenderer {
             Shape::Circle(center, radius) => {
                 self.vger.fill_circle(*center, radius, paint)
             },
-            // None => self.vger.fill(paint)
+            Background => self.vger.fill(paint)
          }
         // } else if let Some(rect) = path.as_rounded_rect() {
         //     self.vger.fill_rect(

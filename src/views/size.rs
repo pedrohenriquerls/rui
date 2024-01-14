@@ -34,7 +34,7 @@ where
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
         path.push(0);
-        self.child.layout(path, &mut args.cx.size(self.size));
+        self.child.layout(path, &mut args.size(self.size));
         path.pop();
         self.size
     }

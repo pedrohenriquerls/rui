@@ -109,7 +109,7 @@ where
 
     fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         path.push(0);
-        self.child.draw(path, args, renderer);
+        self.child.draw(path, args);
         path.pop();
     }
 

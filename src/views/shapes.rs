@@ -23,20 +23,20 @@ impl Circle {
 
 impl View for Circle {
     fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let (point, radius) = self.geom(path, args);
+        let (point, radius) = self.geom(path, args.cx);
         let circle = Shape::Circle(&point, radius);
-        renderer.fill(circle, self.paint, 0.0);
+        args.rd.fill(circle, self.paint, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
         args.cx.update_layout(
             path,
             LayoutBox {
-                rect: LocalRect::new(LocalPoint::zero(), args.cx.sz),
+                rect: LocalRect::new(LocalPoint::zero(), args.sz),
                 offset: LocalOffset::zero(),
             },
         );
-        args.cx.sz
+        args.sz
     }
 
     fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
@@ -94,19 +94,19 @@ impl Rectangle {
 
 impl View for Rectangle {
     fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        let rect = Shape::Rectangle(&self.geom(path, args), self.corner_radius);
-        renderer.fill(rect, self.paint, 0.0);
+        let rect = Shape::Rectangle(&self.geom(path, args.cx), self.corner_radius);
+        args.rd.fill(rect, self.paint, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
         args.cx.update_layout(
             path,
             LayoutBox {
-                rect: LocalRect::new(LocalPoint::zero(), args.cx.sz),
+                rect: LocalRect::new(LocalPoint::zero(), args.sz),
                 offset: LocalOffset::zero(),
             },
         );
-        args.cx.sz
+        args.sz
     }
 
     fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
@@ -136,5 +136,6 @@ pub fn rectangle() -> Rectangle {
 
 pub enum Shape<'a> {
     Rectangle(&'a LocalRect, f32),
-    Circle(&'a LocalPoint, f32)
+    Circle(&'a LocalPoint, f32),
+    Background
 }

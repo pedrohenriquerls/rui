@@ -27,35 +27,35 @@ pub fn hslider(value: impl Binding<f32>) -> impl SliderMods {
             || 0.0,
             move |width, cx| {
                 let w = cx[width];
-                canvas(move |cx, sz, vger| {
+                canvas(move |args, sz| {
                     let c = sz.center();
 
-                    let w = cx[width];
-                    let v = value.get(cx);
+                    let w = args.cx[width];
+                    let v = value.get(args.cx);
                     let r = SLIDER_THUMB_RADIUS;
                     let start_x = r;
                     let end_x = w - r;
                     let x = (1.0 - v) * start_x + v * (end_x);
+                    let rect = LocalRect::new(
+                        [ start_x, c.y - SLIDER_WIDTH / 2.0 ].into(),
+                        [sz.size.width - 2.0 * r, SLIDER_WIDTH].into()
+                    );
+                    args.rd.fill(
+                        Shape::Rectangle(&rect, 0.0),
+                        Paint::Color(BUTTON_BACKGROUND_COLOR),
+                        0.0
+                    );
 
-                    let paint = vger.color_paint(BUTTON_BACKGROUND_COLOR);
-                    vger.fill_rect(
-                        euclid::rect(
-                            start_x,
-                            c.y - SLIDER_WIDTH / 2.0,
-                            sz.size.width - 2.0 * r,
-                            SLIDER_WIDTH,
-                        ),
-                        0.0,
+                    let paint = Paint::Color(AZURE_HIGHLIGHT_BACKGROUND);
+                    let rect = LocalRect::new([ start_x, c.y - SLIDER_WIDTH / 2.0 ].into(), [ x, SLIDER_WIDTH ].into());
+                    args.rd.fill(
+                        Shape::Rectangle(&rect, 0.0),
                         paint,
-                    );
-                    let paint = vger.color_paint(AZURE_HIGHLIGHT_BACKGROUND);
-                    vger.fill_rect(
-                        euclid::rect(start_x, c.y - SLIDER_WIDTH / 2.0, x, SLIDER_WIDTH),
                         0.0,
-                        paint,
                     );
-                    let paint = vger.color_paint(opts.thumb);
-                    vger.fill_circle([x, c.y], r, paint);
+
+                    args.rd.fill(Shape::Circle(&LocalPoint::new(x, c.y), r), Paint::Color(opts.thumb), 0.0);
+                    args.rd.fill(Shape::Background, Paint::Color(AZURE_HIGHLIGHT_BACKGROUND), 0.0);
                 })
                 .geom(move |cx, sz, _| {
                     if sz.width != cx[width] {
@@ -94,18 +94,18 @@ pub fn vslider(
         state(
             || 0.0,
             move |height, _| {
-                canvas(move |cx, sz| {
-                    let h = cx[height];
+                canvas(move |args, sz| {
+                    let h = args.cx[height];
                     let y = value * h;
                     let c = sz.center();
                     let paint = Paint::Color(BUTTON_BACKGROUND_COLOR);
-                    let rect = LocalRect::new(c.x - SLIDER_WIDTH / 2.0, 0.0, SLIDER_WIDTH, sz.height());
-                    cx.renderer.fill(
+                    let rect = LocalRect::new([ c.x - SLIDER_WIDTH / 2.0, 0.0 ].into(), [ SLIDER_WIDTH, sz.height() ].into());
+                    args.rd.fill(
                         Shape::Rectangle(&rect, 0.0),
-                        0.0,
                         paint,
+                        0.0,
                     );
-                    cx.renderer.fill(Shape::Circle([c.x, y].into(), SLIDER_THUMB_RADIUS), Paint::Color(opts.thumb));
+                    args.rd.fill(Shape::Circle(&LocalPoint::new(c.x, y), SLIDER_THUMB_RADIUS), Paint::Color(opts.thumb), 0.0);
                 })
                 .geom(move |cx, sz, _| {
                     if sz.height != cx[height] {

@@ -8,18 +8,18 @@ pub struct Canvas<F> {
 
 impl<F> View for Canvas<F>
 where
-    F: Fn(&mut Context<dyn renderers::Renderer>, LocalRect, &mut Vger) + 'static,
+    F: Fn(&mut DrawArgs, LocalRect) + 'static,
 {
-    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
-        let rect = args.get_layout(path).rect;
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+        let rect = args.cx.get_layout(path).rect;
 
-        args.vger.save();
-        (self.func)(args, rect, args.vger);
-        args.vger.restore();
+        // args.cx.vger.save();
+        (self.func)(args, rect);
+        // args.cx.vger.restore();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        args.update_layout(
+        args.cx.update_layout(
             path,
             LayoutBox {
                 rect: LocalRect::new(LocalPoint::zero(), args.sz),
@@ -29,7 +29,7 @@ where
         args.sz
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
         let rect = cx.get_layout(path).rect;
 
         if rect.contains(pt) {
@@ -39,13 +39,13 @@ where
         }
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
         map.push(cx.view_id(path));
     }
 }
 
 /// Canvas for GPU drawing with Vger. See https://github.com/audulus/vger-rs.
-pub fn canvas<F: Fn(&mut Context<dyn renderers::Renderer>, LocalRect) + 'static>(f: F) -> impl View {
+pub fn canvas(f: impl Fn(&mut DrawArgs, LocalRect) + 'static) -> impl View {
     Canvas { func: f }
 }
 

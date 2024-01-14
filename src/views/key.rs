@@ -10,7 +10,7 @@ pub struct KeyView<V, F> {
 impl<V, F, A> KeyView<V, F>
 where
     V: View,
-    F: Fn(&mut Context<dyn renderers::Renderer>, Key) -> A + 'static,
+    F: Fn(&mut Context, Key) -> A + 'static,
 {
     pub fn new(v: V, f: F) -> Self {
         KeyView { child: v, func: f }
@@ -20,14 +20,14 @@ where
 impl<V, F, A> View for KeyView<V, F>
 where
     V: View,
-    F: Fn(&mut Context<dyn renderers::Renderer>, Key) -> A + 'static,
+    F: Fn(&mut Context, Key) -> A + 'static,
     A: 'static,
 {
     fn process(
         &self,
         event: &Event,
         _path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         if let Event::Key(key) = &event {
@@ -35,7 +35,7 @@ where
         }
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         path.push(0);
         self.child.draw(path, args);
         path.pop();
@@ -48,26 +48,26 @@ where
         sz
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
         path.push(0);
         self.child.dirty(path, xform, cx);
         path.pop();
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
         path.push(0);
         let id = self.child.hittest(path, pt, cx);
         path.pop();
         id
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
         path.push(0);
         self.child.commands(path, cx, cmds);
         path.pop();
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
         path.push(0);
         self.child.gc(path, cx, map);
         path.pop();
@@ -76,7 +76,7 @@ where
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         path.push(0);

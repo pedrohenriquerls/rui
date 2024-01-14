@@ -4,7 +4,7 @@ use crate::*;
 pub struct EmptyView {}
 
 impl View for EmptyView {
-    fn draw(&self, _path: &mut IdPath, _args: &mut Context<dyn renderers::Renderer>) {}
+    fn draw(&self, _path: &mut IdPath, _args: &mut DrawArgs) {}
     fn layout(&self, _path: &mut IdPath, _args: &mut LayoutArgs) -> LocalSize {
         [0.0, 0.0].into()
     }

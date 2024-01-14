@@ -24,7 +24,7 @@ where
         &self,
         event: &Event,
         path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         for child in self.ids.iter().rev() {
@@ -35,18 +35,18 @@ where
         }
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         for child in &self.ids {
             path.push(hh(child));
-            let offset = args.get_layout(path).offset;
+            let offset = args.cx.get_layout(path).offset;
 
-            args.vger.save();
+            args.cx.vger.save();
 
-            args.vger.translate(offset);
+            args.cx.vger.translate(offset);
 
             ((self.func)(child)).draw(path, args);
 
-            args.vger.restore();
+            args.cx.vger.restore();
             path.pop();
         }
     }
@@ -55,7 +55,7 @@ where
         match self.orientation {
             ListOrientation::Horizontal => {
                 let n = self.ids.len() as f32;
-                let proposed_child_size = LocalSize::new(args.sz.width / n, args.sz.height);
+                let proposed_child_size = LocalSize::new(args.cx.sz.width / n, args.cx.sz.height);
 
                 let mut sizes = Vec::<LocalSize>::new();
                 sizes.reserve(self.ids.len());
@@ -64,7 +64,7 @@ where
                 for child in &self.ids {
                     path.push(hh(child));
                     let child_size =
-                        ((self.func)(child)).layout(path, &mut args.size(proposed_child_size));
+                        ((self.func)(child)).layout(path, &mut args.cx.size(proposed_child_size));
                     sizes.push(child_size);
                     path.pop();
 
@@ -87,7 +87,7 @@ where
                         VAlignment::Middle,
                     );
 
-                    args.set_layout_offset(path, child_offset);
+                    args.cx.set_layout_offset(path, child_offset);
 
                     path.pop();
 
@@ -98,7 +98,7 @@ where
             }
             ListOrientation::Vertical => {
                 let n = self.ids.len() as f32;
-                let proposed_child_size = LocalSize::new(args.sz.width, args.sz.height / n);
+                let proposed_child_size = LocalSize::new(args.cx.sz.width, args.cx.sz.height / n);
 
                 let mut sizes = Vec::<LocalSize>::new();
                 sizes.reserve(self.ids.len());
@@ -107,7 +107,7 @@ where
                 for child in &self.ids {
                     path.push(hh(child));
                     let child_size =
-                        ((self.func)(child)).layout(path, &mut args.size(proposed_child_size));
+                        ((self.func)(child)).layout(path, &mut args.cx.size(proposed_child_size));
                     sizes.push(child_size);
                     path.pop();
 
@@ -133,7 +133,7 @@ where
                         HAlignment::Center,
                     );
 
-                    args.set_layout_offset(path, child_offset);
+                    args.cx.set_layout_offset(path, child_offset);
                     path.pop();
 
                     y -= child_size.height;
@@ -147,12 +147,12 @@ where
                     ((self.func)(child)).layout(path, args);
                     path.pop();
                 }
-                args.sz
+                args.cx.sz
             }
         }
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
         for child in &self.ids {
             path.push(hh(child));
             let offset = cx.get_layout(path).offset;
@@ -162,7 +162,7 @@ where
         }
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
         let mut hit = None;
         for child in &self.ids {
             path.push(hh(child));
@@ -176,7 +176,7 @@ where
         hit
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
         for child in &self.ids {
             path.push(hh(child));
             ((self.func)(child)).commands(path, cx, cmds);
@@ -184,7 +184,7 @@ where
         }
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
         map.push(cx.view_id(path));
         for child in &self.ids {
             path.push(hh(child));
@@ -197,7 +197,7 @@ where
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         let mut builder = accesskit::NodeBuilder::new(accesskit::Role::List);

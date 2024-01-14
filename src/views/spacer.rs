@@ -4,7 +4,7 @@ use crate::*;
 pub struct Spacer {}
 
 impl View for Spacer {
-    fn draw(&self, _path: &mut IdPath, _args: &mut Context<dyn renderers::Renderer>) {
+    fn draw(&self, _path: &mut IdPath, _args: &mut Context) {
         let _ = _args;
     }
     fn layout(&self, _path: &mut IdPath, _args: &mut LayoutArgs) -> LocalSize {

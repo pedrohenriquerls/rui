@@ -3,7 +3,7 @@ use std::any::Any;
 
 /// Weak reference to app state.
 ///
-/// To get the underlying value, you'll need a `Context<dyn renderers::Renderer>`, which is passed
+/// To get the underlying value, you'll need a `Context`, which is passed
 /// to all event handlers, and functions passed to `state`.
 pub struct StateHandle<S> {
     pub(crate) id: ViewId,
@@ -27,16 +27,16 @@ impl<S: 'static> StateHandle<S> {
     }
 
     /// Makes it convenient to get a function to set the value.
-    pub fn setter(self) -> impl Fn(S, &mut Context<dyn renderers::Renderer>) {
+    pub fn setter(self) -> impl Fn(S, &mut Context) {
         move |s, cx| cx[self] = s
     }
 }
 
 impl<S: 'static> Binding<S> for StateHandle<S> {
-    fn get<'a>(&self, cx: &'a Context<dyn renderers::Renderer>) -> &'a S {
+    fn get<'a>(&self, cx: &'a Context) -> &'a S {
         cx.get(*self)
     }
-    fn get_mut<'a>(&self, cx: &'a mut Context<dyn renderers::Renderer>) -> &'a mut S {
+    fn get_mut<'a>(&self, cx: &'a mut Context) -> &'a mut S {
         cx.get_mut(*self)
     }
 }
@@ -52,13 +52,13 @@ where
     V: View,
     S: 'static,
     D: Fn() -> S + 'static,
-    F: Fn(StateHandle<S>, &Context<dyn renderers::Renderer>) -> V + 'static,
+    F: Fn(StateHandle<S>, &Context) -> V + 'static,
 {
     fn process(
         &self,
         event: &Event,
         path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         let id = cx.view_id(path);
@@ -68,25 +68,25 @@ where
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
-        let id = args.view_id(path);
-        args.init_state(id, &self.default);
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+        let id = args.cx.view_id(path);
+        args.cx.init_state(id, &self.default);
         path.push(0);
         (self.func)(StateHandle::new(id), args).draw(path, args);
         path.pop();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        let id = args.view_id(path);
-        args.init_state(id, &self.default);
+        let id = args.cx.view_id(path);
+        args.cx.init_state(id, &self.default);
 
         // Do we need to recompute layout?
         let mut compute_layout = true;
 
-        if let Some(deps) = args.deps.get(&id) {
+        if let Some(deps) = args.cx.deps.get(&id) {
             let mut any_dirty = false;
             for dep in deps {
-                if let Some(holder) = args.state_map.get_mut(dep) {
+                if let Some(holder) = args.cx.state_map.get_mut(dep) {
                     if holder.dirty {
                         any_dirty = true;
                         break;
@@ -98,7 +98,7 @@ where
         }
 
         if compute_layout {
-            args.id_stack.push(id);
+            args.cx.id_stack.push(id);
 
             let view = (self.func)(StateHandle::new(id), args);
 
@@ -107,26 +107,26 @@ where
 
             // Compute layout dependencies.
             let mut deps = vec![];
-            deps.append(&mut args.id_stack.clone());
+            deps.append(&mut args.cx.id_stack.clone());
             view.gc(path, args, &mut deps);
 
             path.pop();
 
-            args.deps.insert(id, deps);
+            args.cx.deps.insert(id, deps);
 
             let layout_box = LayoutBox {
                 rect: LocalRect::new(LocalPoint::zero(), child_size),
                 offset: LocalOffset::zero(),
             };
-            args.update_layout(path, layout_box);
+            args.cx.update_layout(path, layout_box);
 
-            args.id_stack.pop();
+            args.cx.id_stack.pop();
         }
 
-        args.get_layout(path).rect.size
+        args.cx.get_layout(path).rect.size
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
         let default = &self.default;
         let id = cx.view_id(path);
         let holder = cx.state_map.entry(id).or_insert_with(|| StateHolder {
@@ -152,7 +152,7 @@ where
         }
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
         let id = cx.view_id(path);
         cx.init_state(id, &self.default);
         path.push(0);
@@ -161,7 +161,7 @@ where
         hit_id
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
         let id = cx.view_id(path);
         cx.init_state(id, &self.default);
         path.push(0);
@@ -169,7 +169,7 @@ where
         path.pop();
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
         let id = cx.view_id(path);
         cx.init_state(id, &self.default);
         map.push(id);
@@ -181,7 +181,7 @@ where
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         let id = cx.view_id(path);
@@ -206,7 +206,7 @@ pub fn state<
     S: 'static,
     V: View,
     D: Fn() -> S + 'static,
-    F: Fn(StateHandle<S>, &Context<dyn renderers::Renderer>) -> V + 'static,
+    F: Fn(StateHandle<S>, &Context) -> V + 'static,
 >(
     initial: D,
     f: F,
@@ -218,7 +218,7 @@ pub fn state<
 }
 
 /// Convenience to get the context.
-pub fn with_cx<V: View, F: Fn(&Context<dyn renderers::Renderer>) -> V + 'static>(f: F) -> impl View {
+pub fn with_cx<V: View, F: Fn(&Context) -> V + 'static>(f: F) -> impl View {
     state(|| (), move |_, cx| f(cx))
 }
 

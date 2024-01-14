@@ -1,5 +1,5 @@
 use crate::*;
-use renderers::{EmptyRenderer, Renderer};
+use renderers::Renderer;
 use euclid::*;
 use std::any::Any;
 use std::any::TypeId;
@@ -41,17 +41,9 @@ pub(crate) type StateMap = HashMap<ViewId, StateHolder>;
 
 pub(crate) type EnvMap = HashMap<TypeId, Box<dyn Any>>;
 
-pub struct RenderInfo<'a> {
-    pub device: &'a wgpu::Device,
-    pub surface: &'a wgpu::Surface,
-    pub config: &'a wgpu::SurfaceConfiguration,
-    pub queue: &'a wgpu::Queue,
-}
-
 /// The Context stores all UI state. A user of the library
 /// shouldn't have to interact with it directly.
-pub struct Context<T: Renderer> {
-    pub renderer: T,
+pub struct Context {
     /// Layout information for all views.
     layout: HashMap<IdPath, LayoutBox>,
 
@@ -124,16 +116,15 @@ pub struct Context<T: Renderer> {
     pub(crate) prev_grab_cursor: bool,
 }
 
-impl Default for Context<dyn Renderer> {
+impl Default for Context {
     fn default() -> Self {
-        Self::new(&EmptyRenderer::default())
+        Self::new()
     }
 }
 
-impl Context<dyn Renderer> {
-    pub fn new(renderer: &impl Renderer) -> Self {
+impl Context {
+    pub fn new() -> Self {
         Self {
-            renderer: renderer,
             layout: HashMap::new(),
             view_ids: HashMap::new(),
             next_id: ViewId { id: 0 },
@@ -239,6 +230,7 @@ impl Context<dyn Renderer> {
     /// Redraw the UI using wgpu.
     pub fn render(
         &mut self,
+        renderer: &mut impl Renderer,
         view: &impl View,
         window_size: Size2D<f32, WorldSpace>,
         scale: f32,
@@ -262,7 +254,7 @@ impl Context<dyn Renderer> {
         self.root_offset = ((local_window_size - sz) / 2.0).into();
 
         // vger.translate(self.root_offset);
-        view.draw(&mut path, self);
+        view.draw(&mut path, &mut DrawArgs { cx: self, rd: renderer });
         self.enable_dirty = true;
 
         if self.render_dirty {
@@ -270,12 +262,12 @@ impl Context<dyn Renderer> {
             for rect in self.dirty_region.rects() {
                 // let local_rect = LocalRect::new([xf.transform_point(rect.min()), xf.transform_point(rect.max())].into(), rect.size.into());
                 let local_rect = LocalRect::default();
-                self.renderer.stroke(Shape::Rectangle(&local_rect, 0.0), Paint::Color(RED_HIGHLIGHT), scale);
+                renderer.stroke(Shape::Rectangle(&local_rect, 0.0), Paint::Color(RED_HIGHLIGHT), scale);
             }
         }
 
         self.dirty_region.clear();
-        self.renderer.finish();
+        renderer.finish();
     }
 
     /// Process a UI event.
@@ -417,7 +409,7 @@ impl Context<dyn Renderer> {
     }
 }
 
-impl<S> ops::Index<StateHandle<S>> for Context<dyn Renderer>
+impl<S> ops::Index<StateHandle<S>> for Context
 where
     S: 'static,
 {
@@ -428,7 +420,7 @@ where
     }
 }
 
-impl<S> ops::IndexMut<StateHandle<S>> for Context<dyn Renderer>
+impl<S> ops::IndexMut<StateHandle<S>> for Context
 where
     S: 'static,
 {

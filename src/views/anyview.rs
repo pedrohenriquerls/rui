@@ -37,7 +37,7 @@ impl View for AnyView {
         &self,
         event: &Event,
         path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         path.push(self.id_hash());
@@ -45,7 +45,7 @@ impl View for AnyView {
         path.pop();
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         path.push(self.id_hash());
         self.child.draw(path, args);
         path.pop();
@@ -58,26 +58,26 @@ impl View for AnyView {
         sz
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
         path.push(self.id_hash());
         self.child.dirty(path, xform, cx);
         path.pop();
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
         path.push(self.id_hash());
         let vid = self.child.hittest(path, pt, cx);
         path.pop();
         vid
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
         path.push(self.id_hash());
         self.child.commands(path, cx, cmds);
         path.pop();
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
         path.push(self.id_hash());
         self.child.gc(path, cx, map);
         path.pop();
@@ -86,7 +86,7 @@ impl View for AnyView {
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         path.push(self.id_hash());

@@ -16,7 +16,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-type WorkQueue = VecDeque<Box<dyn FnOnce(&mut Context<VgerRenderer>) + Send>>;
+type WorkQueue = VecDeque<Box<dyn FnOnce(&mut Context) + Send>>;
 
 struct Setup {
     size: PhysicalSize<u32>,
@@ -90,7 +90,7 @@ async fn setup(window: &Window) -> Setup {
     }
 }
 
-fn process_event(cx: &mut Context<VgerRenderer>, view: &impl View, event: &Event, window: &Window) {
+fn process_event(cx: &mut Context, view: &impl View, event: &Event, window: &Window) {
     cx.process(view, event);
 
     if cx.23 && !cx.24 {
@@ -122,7 +122,7 @@ pub fn rui(view: impl View) {
     let window = builder.build(&event_loop).unwrap();
     let renderer = VgerRenderer::new(&window, 0, 0,0.0).unwrap();
 
-    let mut cx = Context::new(&renderer);
+    let mut cx = Context::new();
     let mut mouse_position = LocalPoint::zero();
 
     let mut commands: Vec<CommandInfo> = Vec::new();
@@ -220,6 +220,7 @@ pub fn rui(view: impl View) {
 
                 // println!("RedrawRequested");
                 cx.render(
+                    &mut renderer,
                     &view,
                     [width, height].into(),
                     scale,

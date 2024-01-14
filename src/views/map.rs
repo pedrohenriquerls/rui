@@ -11,14 +11,14 @@ impl<S1, V, SF, F> View for MapView<S1, SF, F>
 where
     V: View,
     S1: Clone + 'static,
-    SF: Fn(S1, &mut Context<dyn renderers::Renderer>) + 'static,
-    F: Fn(StateHandle<S1>, &mut Context<dyn renderers::Renderer>) -> V + 'static,
+    SF: Fn(S1, &mut Context) + 'static,
+    F: Fn(StateHandle<S1>, &mut Context) -> V + 'static,
 {
     fn process(
         &self,
         event: &Event,
         path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         actions: &mut Vec<Box<dyn Any>>,
     ) {
         let id = cx.view_id(path);
@@ -34,17 +34,17 @@ where
         }
     }
 
-    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
-        let id = args.view_id(path);
-        args.set_state(id, self.value.clone());
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
+        let id = args.cx.view_id(path);
+        args.cx.set_state(id, self.value.clone());
         path.push(0);
         (self.func)(StateHandle::new(id), args).draw(path, args);
         path.pop();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        let id = args.view_id(path);
-        args.set_state(id, self.value.clone());
+        let id = args.cx.view_id(path);
+        args.cx.set_state(id, self.value.clone());
 
         path.push(0);
         let sz = (self.func)(StateHandle::new(id), args).layout(path, args);
@@ -52,7 +52,7 @@ where
         sz
     }
 
-    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context<dyn renderers::Renderer>) {
+    fn dirty(&self, path: &mut IdPath, xform: LocalToWorld, cx: &mut Context) {
         let id = cx.view_id(path);
         cx.set_state(id, self.value.clone());
         path.push(0);
@@ -60,7 +60,7 @@ where
         path.pop();
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
         let id = cx.view_id(path);
         cx.set_state(id, self.value.clone());
         path.push(0);
@@ -69,7 +69,7 @@ where
         hit_id
     }
 
-    fn commands(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, cmds: &mut Vec<CommandInfo>) {
+    fn commands(&self, path: &mut IdPath, cx: &mut Context, cmds: &mut Vec<CommandInfo>) {
         let id = cx.view_id(path);
         cx.set_state(id, self.value.clone());
         path.push(0);
@@ -77,7 +77,7 @@ where
         path.pop();
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
         let id = cx.view_id(path);
         cx.set_state(id, self.value.clone());
         map.push(id);
@@ -89,7 +89,7 @@ where
     fn access(
         &self,
         path: &mut IdPath,
-        cx: &mut Context<dyn renderers::Renderer>,
+        cx: &mut Context,
         nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         let id = cx.view_id(path);

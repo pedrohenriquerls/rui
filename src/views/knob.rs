@@ -16,22 +16,22 @@ pub fn knob(value: impl Binding<f32>) -> impl View {
                 *v = (*v + (delta.x + delta.y) / 400.0).clamp(0.0, 1.0)
             })
             .grab_cursor(),
-        canvas(move |cx, sz, vger| {
-            let c = sz.center();
-            let r = sz.width().min(sz.height()) / 2.0;
+        canvas(move |cx, sz, renderer| {
+            // let c = sz.center();
+            // let r = sz.width().min(sz.height()) / 2.0;
 
-            let paint = vger.color_paint(CONTROL_BACKGROUND);
+            // let paint = vger.color_paint(CONTROL_BACKGROUND);
 
-            vger.stroke_arc(c, r, 2.0, 0.0, std::f32::consts::PI, paint);
+            // vger.stroke_arc(c, r, 2.0, 0.0, std::f32::consts::PI, paint);
 
-            let paint = vger.color_paint(AZURE_HIGHLIGHT);
-            let a0 = lerp(*value.get(cx), THETA_MAX, THETA_MIN);
-            let a1 = THETA_MAX;
+            // let paint = vger.color_paint(AZURE_HIGHLIGHT);
+            // let a0 = lerp(*value.get(cx), THETA_MAX, THETA_MIN);
+            // let a1 = THETA_MAX;
 
-            let theta = -(a0 + a1) / 2.0 + std::f32::consts::PI;
-            let ap = (a0 - a1).abs() / 2.0;
+            // let theta = -(a0 + a1) / 2.0 + std::f32::consts::PI;
+            // let ap = (a0 - a1).abs() / 2.0;
 
-            vger.stroke_arc(c, r, 2.0, theta, ap, paint);
+            // vger.stroke_arc(c, r, 2.0, theta, ap, paint);
         }),
     ))
 }

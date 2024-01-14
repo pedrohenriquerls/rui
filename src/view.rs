@@ -3,7 +3,7 @@ use std::any::{Any, TypeId};
 
 pub struct LayoutArgs<'a> {
     pub sz: LocalSize,
-    pub cx: &'a mut Context<dyn renderers::Renderer>,
+    pub cx: &'a mut Context,
     pub text_bounds: &'a mut dyn FnMut(&str, u32, Option<f32>) -> LocalRect,
 }
 
@@ -17,34 +17,39 @@ impl<'a> LayoutArgs<'a> {
     }
 }
 
+pub struct DrawArgs<'a> {
+    pub cx: &'a mut Context,
+    pub rd: &'a dyn renderers::Renderer
+}
+
 /// Trait for the unit of UI composition.
 pub trait View: private::Sealed + 'static {
     /// Builds an AccessKit tree. The node ID for the subtree is returned. All generated nodes are accumulated.
     fn access(
         &self,
         _path: &mut IdPath,
-        _cx: &mut Context<dyn renderers::Renderer>,
+        _cx: &mut Context,
         _nodes: &mut Vec<(accesskit::NodeId, accesskit::Node)>,
     ) -> Option<accesskit::NodeId> {
         None
     }
 
     /// Accumulates information about menu bar commands.
-    fn commands(&self, _path: &mut IdPath, _cx: &mut Context<dyn renderers::Renderer>, _cmds: &mut Vec<CommandInfo>) {}
+    fn commands(&self, _path: &mut IdPath, _cx: &mut Context, _cmds: &mut Vec<CommandInfo>) {}
 
     /// Determines dirty regions which need repainting.
-    fn dirty(&self, _path: &mut IdPath, _xform: LocalToWorld, _cx: &mut Context<dyn renderers::Renderer>) {}
+    fn dirty(&self, _path: &mut IdPath, _xform: LocalToWorld, _cx: &mut Context) {}
 
     /// Draws the view using vger.
-    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>);
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs);
 
     /// Gets IDs for views currently in use.
     ///
     /// Push onto map if the view stores layout or state info.
-    fn gc(&self, _path: &mut IdPath, _cx: &mut Context<dyn renderers::Renderer>, _map: &mut Vec<ViewId>) {}
+    fn gc(&self, _path: &mut IdPath, _cx: &mut Context, _map: &mut Vec<ViewId>) {}
 
     /// Returns the topmost view which the point intersects.
-    fn hittest(&self, _path: &mut IdPath, _pt: LocalPoint, _cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
+    fn hittest(&self, _path: &mut IdPath, _pt: LocalPoint, _cx: &mut Context) -> Option<ViewId> {
         None
     }
 
@@ -68,7 +73,7 @@ pub trait View: private::Sealed + 'static {
         &self,
         _event: &Event,
         _path: &mut IdPath,
-        _cx: &mut Context<dyn renderers::Renderer>,
+        _cx: &mut Context,
         _actions: &mut Vec<Box<dyn Any>>,
     ) {
     }

@@ -88,7 +88,7 @@ where
 /// Vertical slider built from other Views.
 pub fn vslider(
     value: f32,
-    set_value: impl Fn(&mut Context<dyn renderers::Renderer>, f32) + 'static + Copy,
+    set_value: impl Fn(&mut Context, f32) + 'static + Copy,
 ) -> impl SliderMods {
     modview(move |opts: SliderOptions, _| {
         state(

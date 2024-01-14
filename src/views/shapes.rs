@@ -8,7 +8,7 @@ pub struct Circle {
 }
 
 impl Circle {
-    fn geom(&self, path: &IdPath, cx: &mut Context<dyn renderers::Renderer>) -> (LocalPoint, f32) {
+    fn geom(&self, path: &IdPath, cx: &mut Context) -> (LocalPoint, f32) {
         let rect = cx.get_layout(path).rect;
 
         (rect.center(), rect.size.width.min(rect.size.height) / 2.0)
@@ -22,24 +22,24 @@ impl Circle {
 }
 
 impl View for Circle {
-    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         let (point, radius) = self.geom(path, args);
         let circle = Shape::Circle(&point, radius);
-        args.renderer.fill(circle, self.paint, 0.0);
+        renderer.fill(circle, self.paint, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        args.update_layout(
+        args.cx.update_layout(
             path,
             LayoutBox {
-                rect: LocalRect::new(LocalPoint::zero(), args.sz),
+                rect: LocalRect::new(LocalPoint::zero(), args.cx.sz),
                 offset: LocalOffset::zero(),
             },
         );
-        args.sz
+        args.cx.sz
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
         let (center, radius) = self.geom(path, cx);
 
         if pt.distance_to(center) < radius {
@@ -49,7 +49,7 @@ impl View for Circle {
         }
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
         map.push(cx.view_id(path));
     }
 }
@@ -71,7 +71,7 @@ pub struct Rectangle {
 }
 
 impl Rectangle {
-    fn geom(&self, path: &IdPath, cx: &mut Context<dyn renderers::Renderer>) -> LocalRect {
+    fn geom(&self, path: &IdPath, cx: &mut Context) -> LocalRect {
         cx.get_layout(path).rect
     }
 
@@ -93,23 +93,23 @@ impl Rectangle {
 }
 
 impl View for Rectangle {
-    fn draw(&self, path: &mut IdPath, args: &mut Context<dyn renderers::Renderer>) {
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         let rect = Shape::Rectangle(&self.geom(path, args), self.corner_radius);
-        args.renderer.fill(rect, self.paint, 0.0);
+        renderer.fill(rect, self.paint, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        args.update_layout(
+        args.cx.update_layout(
             path,
             LayoutBox {
-                rect: LocalRect::new(LocalPoint::zero(), args.sz),
+                rect: LocalRect::new(LocalPoint::zero(), args.cx.sz),
                 offset: LocalOffset::zero(),
             },
         );
-        args.sz
+        args.cx.sz
     }
 
-    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context<dyn renderers::Renderer>) -> Option<ViewId> {
+    fn hittest(&self, path: &mut IdPath, pt: LocalPoint, cx: &mut Context) -> Option<ViewId> {
         let rect = self.geom(path, cx);
 
         if rect.contains(pt) {
@@ -119,7 +119,7 @@ impl View for Rectangle {
         }
     }
 
-    fn gc(&self, path: &mut IdPath, cx: &mut Context<dyn renderers::Renderer>, map: &mut Vec<ViewId>) {
+    fn gc(&self, path: &mut IdPath, cx: &mut Context, map: &mut Vec<ViewId>) {
         map.push(cx.view_id(path));
     }
 }

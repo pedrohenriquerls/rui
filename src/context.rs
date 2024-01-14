@@ -1,4 +1,5 @@
 use crate::*;
+use renderers::{VgerRenderer, Renderer};
 use euclid::*;
 use winit::window::Window;
 use std::any::Any;
@@ -51,7 +52,7 @@ pub struct RenderInfo<'a> {
 /// The Context stores all UI state. A user of the library
 /// shouldn't have to interact with it directly.
 pub struct Context {
-    pub renderer: renderers::VgerRenderer,
+    pub renderer: VgerRenderer,
     /// Layout information for all views.
     layout: HashMap<IdPath, LayoutBox>,
 
@@ -268,7 +269,7 @@ impl Context {
         if self.render_dirty {
             let xf = WorldToLocal::identity();
             for rect in self.dirty_region.rects() {
-                self.renderer.fill(rect, RED_HIGHLIGHT, scale);
+                self.renderer.fill(&Shape::Rectangle(&rect, 0.0), Paint::Color(RED_HIGHLIGHT), scale);
             }
         }
 
@@ -412,6 +413,10 @@ impl Context {
         let holder = self.state_map.get_mut(&id.id).unwrap();
         holder.dirty = true;
         holder.state.downcast_mut::<S>().unwrap()
+    }
+
+    pub(crate) fn render_fill(&self, rect: Shape<'_>, paint: Paint, arg: f64) -> _ {
+        todo!()
     }
 }
 

@@ -1,4 +1,5 @@
 use crate::*;
+use crate::renderers::Renderer;
 
 /// Struct for `circle`.
 #[derive(Clone)]
@@ -22,7 +23,9 @@ impl Circle {
 
 impl View for Circle {
     fn draw(&self, path: &mut IdPath, args: &mut Context) {
-        args.renderer.fill(self, 0.0);
+        let (point, radius) = self.geom(path, args);
+        let circle = Shape::Circle(&point, radius);
+        args.renderer.fill(&circle, self.paint, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
@@ -91,7 +94,8 @@ impl Rectangle {
 
 impl View for Rectangle {
     fn draw(&self, path: &mut IdPath, args: &mut Context) {
-        args.renderer.fill(self, 0.0);
+        let rect = Shape::Rectangle(&self.geom(path, args), self.corner_radius);
+        args.renderer.fill(&rect, self.paint, 0.0);
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
@@ -130,7 +134,7 @@ pub fn rectangle() -> Rectangle {
     }
 }
 
-pub enum Shape {
-    Circle,
-    Rectangle
+pub enum Shape<'a> {
+    Rectangle(&'a LocalRect, f32),
+    Circle(&'a LocalPoint, f32)
 }

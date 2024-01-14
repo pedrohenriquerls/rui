@@ -2,6 +2,7 @@ use std::mem;
 use std::sync::mpsc::sync_channel;
 use std::sync::Arc;
 
+use crate::renderers::renderer::Renderer;
 use anyhow::Result;
 use cosmic_text::{SubpixelBin, SwashCache, TextLayout};
 use crate::*;
@@ -17,7 +18,7 @@ pub struct VgerRenderer {
     vger: Vger,
     alt_vger: Option<Vger>,
     pub config: SurfaceConfiguration,
-    scale: f64,
+    scale: f32,
     transform: LocalToWorld,
     clip: Option<LocalRect>,
     capture: bool,
@@ -113,7 +114,7 @@ impl VgerRenderer {
         })
     }
 
-    pub fn resize(&mut self, width: u32, height: u32, scale: f64) {
+    pub fn resize(&mut self, width: u32, height: u32, scale: f32) {
         if width != self.config.width || height != self.config.height {
             self.config.width = width;
             self.config.height = height;
@@ -122,7 +123,7 @@ impl VgerRenderer {
         self.scale = scale;
     }
 
-    pub fn set_scale(&mut self, scale: f64) {
+    pub fn set_scale(&mut self, scale: f32) {
         self.scale = scale;
     }
 }
@@ -130,20 +131,19 @@ impl VgerRenderer {
 impl VgerRenderer {
     fn brush_to_paint<'b>(&mut self, brush: Paint) -> Option<PaintIndex> {
         let paint = match brush {
-            Paint::Color(color) => self.vger.color_paint(*color),
+            Paint::Color(color) => self.vger.color_paint(color),
             Paint::Gradient {
                 start,
                 end,
                 inner_color,
                 outer_color,
-            } => self.vger.linear_gradient(*start, *end, *inner_color, *outer_color, 0.0),
+            } => self.vger.linear_gradient(start, end, inner_color, outer_color, 0.0),
         };
         Some(paint)
     }
 
     fn vger_point(&self, point: LocalPoint) -> vger::defs::LocalPoint {
-        let coeffs = self.transform.as_coeffs();
-        let point = point + LocalOffset::new(coeffs[4], coeffs[5]);
+        let point = point + LocalOffset::new(self.transform.m31, self.transform.m32);
         vger::defs::LocalPoint::new(
             (point.x * self.scale).round() as f32,
             (point.y * self.scale).round() as f32,
@@ -151,10 +151,10 @@ impl VgerRenderer {
     }
 
     fn vger_rect(&self, rect: LocalRect) -> vger::defs::LocalRect {
-        let origin = rect.origin();
+        let origin = rect.origin;
         let origin = self.vger_point(origin);
 
-        let end = LocalPoint::new(rect.x1, rect.y1);
+        let end = LocalPoint::new(rect.min_x(), rect.min_y());
         let end = self.vger_point(end);
 
         let size = (end - origin).to_size();
@@ -275,86 +275,76 @@ impl Renderer for VgerRenderer {
         );
     }
 
-    fn stroke<'b>(&mut self, shape: Shape, brush: Paint, width: f64) {
+    fn stroke<'b>(&mut self, shape: &Shape, brush: Paint, width: f32) {
         let paint = match self.brush_to_paint(brush) {
             Some(paint) => paint,
             None => return,
         };
+
         let width = (width * self.scale).round() as f32;
-        if let Some(rect) = shape.as_rect() {
-            let min = rect.origin();
-            let max = min + rect.size().to_vec2();
-            self.vger.stroke_rect(
-                self.vger_point(min),
-                self.vger_point(max),
-                0.0,
-                width,
-                paint,
-            );
-        } else if let Some(rect) = shape.as_rounded_rect() {
-            let min = rect.origin();
-            let max = min + rect.rect().size().to_vec2();
-            let radius = (rect.radii().top_left * self.scale) as f32;
-            self.vger.stroke_rect(
-                self.vger_point(min),
-                self.vger_point(max),
-                radius,
-                width,
-                paint,
-            );
-        } else if let Some(line) = shape.as_line() {
-            self.vger.stroke_segment(
-                self.vger_point(line.p0),
-                self.vger_point(line.p1),
-                width,
-                paint,
-            );
+        match shape {
+            Shape::Rectangle(rect, corner_radius) => {
+                self.vger.stroke_rect(
+                    rect.min(),
+                    rect.max(),
+                    *corner_radius,
+                    width,
+                    paint,
+                );
+            },
+            Shape::Circle(center, radius) => {},
         }
+        // } else if let Some(line) = shape.as_line() {
+        //     self.vger.stroke_segment(
+        //         self.vger_point(line.p0),
+        //         self.vger_point(line.p1),
+        //         width,
+        //         paint,
+        //     );
+        // }
     }
 
-    fn fill<'b>(&mut self, path: &impl Shape, brush: Paint, blur_radius: f64) {
+    fn fill<'b>(&mut self, path: &Shape, brush: Paint, blur_radius: f32) {
         let paint = match self.brush_to_paint(brush) {
             Some(paint) => paint,
             None => return,
         };
-        if let Some(rect) = path.as_rect() {
-            self.vger.fill_rect(
-                self.vger_rect(rect),
-                0.0,
-                paint,
-                (blur_radius * self.scale) as f32,
-            );
-        } else if let Some(rect) = path.as_rounded_rect() {
-            self.vger.fill_rect(
-                self.vger_rect(rect.rect()),
-                (rect.radii().top_left * self.scale) as f32,
-                paint,
-                (blur_radius * self.scale) as f32,
-            );
-        } else if let Some(circle) = path.as_circle() {
-            self.vger.fill_circle(
-                self.vger_point(circle.center),
-                (circle.radius * self.scale) as f32,
-                paint,
-            )
-        } else {
-            self.vger.fill(paint);
-        }
+
+        match path {
+            Shape::Rectangle(rect, corner_radius) => {
+                self.vger.fill_rect(
+                    *rect,
+                    *corner_radius,
+                    paint,
+                    (blur_radius * self.scale) as f32,
+                );
+            },
+            Shape::Circle(center, radius) => {
+                self.vger.fill_circle(*center, *radius, paint)
+            },
+            // None => self.vger.fill(paint)
+         }
+        // } else if let Some(rect) = path.as_rounded_rect() {
+        //     self.vger.fill_rect(
+        //         self.vger_rect(rect.rect()),
+        //         (rect.radii().top_left * self.scale) as f32,
+        //         paint,
+        //         (blur_radius * self.scale) as f32,
+        //     );
     }
 
-    fn draw_text(&mut self, layout: &TextLayout, pos: impl Into<LocalPoint>) {
+    fn draw_text(&mut self, layout: &TextLayout, pos: LocalPoint) {
         let mut swash_cache = SwashCache::new();
-        let transform = self.transform.as_coeffs();
-        let offset = LocalOffset::new(transform[4], transform[5]);
-        let pos: LocalPoint = pos.into();
+        let offset = LocalOffset::new(self.transform.m31, self.transform.m32);
+        // let pos: LocalPoint = pos.into();
         let clip = self.clip;
         for line in layout.layout_runs() {
             if let Some(rect) = clip {
-                let y = pos.y + offset.y + line.line_y as f64;
-                if y + (line.line_height as f64) < rect.y0 {
+                let y = pos.y + offset.y + line.line_y;
+                if y + line.line_height < rect.min_y() {
                     continue;
                 }
-                if y - (line.line_height as f64) > rect.y1 {
+                if y - line.line_height > rect.max_y() {
                     break;
                 }
             }
@@ -363,9 +353,9 @@ impl Renderer for VgerRenderer {
                 let y = line.line_y + pos.y as f32 + offset.y as f32;
 
                 if let Some(rect) = clip {
-                    if ((x + glyph_run.w) as f64) < rect.x0 {
+                    if (x + glyph_run.w) < rect.min_x() {
                         continue;
-                    } else if x as f64 > rect.x1 {
+                    } else if x > rect.max_x() {
                         break 'line_loop;
                     }
                 }
@@ -374,7 +364,7 @@ impl Renderer for VgerRenderer {
                 //     continue;
                 // }
 
-                if let Some(paint) = self.brush_to_paint(glyph_run.color) {
+                if let Some(paint) = self.brush_to_paint(Paint::Color(glyph_run.color)) {
                     let glyph_x = x * self.scale as f32;
                     let (new_x, subpx_x) = SubpixelBin::new(glyph_x);
                     let glyph_x = new_x as f32;
@@ -406,29 +396,29 @@ impl Renderer for VgerRenderer {
         }
     }
 
-    fn draw_img(&mut self, img: Img<'_>, rect: LocalRect) {
-        let transform = self.transform.as_coeffs();
-        let width = (rect.width() * self.scale).round() as u32;
-        let height = (rect.height() * self.scale).round() as u32;
-        let width = width.max(1);
-        let height = height.max(1);
-        let origin = rect.origin();
-        let x = ((origin.x + transform[4]) * self.scale).round() as f32;
-        let y = ((origin.y + transform[5]) * self.scale).round() as f32;
+    // fn draw_img(&mut self, img: Img<'_>, rect: LocalRect) {
+    //     let transform = self.transform.as_coeffs();
+    //     let width = (rect.width() * self.scale).round() as u32;
+    //     let height = (rect.height() * self.scale).round() as u32;
+    //     let width = width.max(1);
+    //     let height = height.max(1);
+    //     let origin = rect.origin();
+    //     let x = ((origin.x + transform[4]) * self.scale).round() as f32;
+    //     let y = ((origin.y + transform[5]) * self.scale).round() as f32;
 
-        self.vger.render_image(x, y, img.hash, width, height, || {
-            let rgba = img.img.clone().into_rgba8();
-            let data = rgba.as_bytes().to_vec();
+    //     self.vger.render_image(x, y, img.hash, width, height, || {
+    //         let rgba = img.img.clone().into_rgba8();
+    //         let data = rgba.as_bytes().to_vec();
 
-            let (width, height) = rgba.dimensions();
-            Image {
-                width,
-                height,
-                data,
-                pixel_format: PixelFormat::Rgba,
-            }
-        });
-    }
+    //         let (width, height) = rgba.dimensions();
+    //         Image {
+    //             width,
+    //             height,
+    //             data,
+    //             pixel_format: PixelFormat::Rgba,
+    //         }
+    //     });
+    // }
 
     fn transform(&mut self, transform: LocalToWorld) {
         self.transform = transform;

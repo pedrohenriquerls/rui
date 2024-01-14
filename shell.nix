@@ -19,6 +19,7 @@ let
   # WINIT_UNIX_BACKEND=wayland
     wayland
 
+  # Default to wayland
   # WINIT_UNIX_BACKEND=x11
     xorg.libXcursor
     xorg.libXrandr
@@ -29,6 +30,7 @@ let
   shell = pkgs.mkShell {
     buildInputs = lib-defs;
     shellHook = ''
+      export WINIT_UNIX_BACKEND=x11
       rustup update
       # Augment the dynamic linker path
       export "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath lib-defs}"

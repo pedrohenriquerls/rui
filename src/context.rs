@@ -251,18 +251,20 @@ impl Context {
         );
         assert!(path.len() == 1);
 
+        // This Calculatuion must be done on renderer?
         // Center the root view in the window.
         self.root_offset = ((local_window_size - sz) / 2.0).into();
-
-        // vger.translate(self.root_offset);
+        renderer.translate(self.root_offset);
         view.draw(&mut path, &mut DrawArgs { cx: self, rd: renderer });
         self.enable_dirty = true;
 
         if self.render_dirty {
             let xf = WorldToLocal::identity();
             for rect in self.dirty_region.rects() {
-                // let local_rect = LocalRect::new([xf.transform_point(rect.min()), xf.transform_point(rect.max())].into(), rect.size.into());
-                let local_rect = LocalRect::default();
+                let origin = xf.transform_point(rect.min());
+                let end = xf.transform_point(rect.max());
+                let local_rect = LocalRect::new(origin, LocalSize::new(rect.size.width, rect.size.height));
+                // let local_rect = LocalRect::default();
                 renderer.stroke(Shape::Rectangle(&local_rect, 0.0), Paint::Color(RED_HIGHLIGHT), scale);
             }
         }

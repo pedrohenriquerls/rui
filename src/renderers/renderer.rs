@@ -12,6 +12,8 @@ pub struct Img<'a> {
 pub trait Renderer {
     fn begin(&mut self, capture: bool);
 
+    fn translate(&mut self, offiset: LocalOffset) {}
+
     fn transform(&mut self, transform: WorldToLocal);
 
     fn current_tranform(&self) -> LocalToWorld;

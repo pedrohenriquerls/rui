@@ -141,7 +141,7 @@ pub fn rui(view: impl View) {
     let mut window_title = String::from("rui");
     let builder = WindowBuilder::new().with_title(&window_title);
     let window = builder.build(&event_loop).unwrap();
-    let mut renderer = match VgerRenderer::new(&window, 1.0) {
+    let mut renderer = match VgerRenderer::new(&window) {
         Ok(render) => render,
         Err(error) => panic_any(error)
     };
@@ -191,7 +191,7 @@ pub fn rui(view: impl View) {
                 // config.width = size.width.max(1);
                 // config.height = size.height.max(1);
                 // surface.configure(&device, &config);
-                renderer.resize(size.width.max(1), size.height.max(1), 1.0);
+                renderer.resize(size.width.max(1), size.height.max(1), window.scale_factor() as f32);
                 window.request_redraw();
             }
             WEvent::UserEvent(_) => {

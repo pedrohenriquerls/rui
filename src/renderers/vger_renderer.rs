@@ -35,7 +35,6 @@ const CLEAR_COLOR: wgpu::Color = wgpu::Color {
 impl VgerRenderer {
     pub fn new(
         window: &Window,
-        scale: f32,
     ) -> Result<Self> {
         let instance = wgpu::Instance::default();
 
@@ -112,7 +111,7 @@ impl VgerRenderer {
             surface,
             vger,
             alt_vger: None,
-            scale,
+            scale: window.scale_factor() as f32,
             config,
             transform: WorldToLocal::identity(),
             clip: None,
@@ -149,7 +148,7 @@ impl VgerRenderer {
     }
 
     fn vger_point(&self, point: LocalPoint) -> vger::defs::LocalPoint {
-        let point = point + LocalOffset::new(self.transform.m31, self.transform.m32);
+        let point = self.current_tranform().transform_point(point);
         vger::defs::LocalPoint::new(
             (point.x * self.scale).round() as f32,
             (point.y * self.scale).round() as f32,
@@ -263,6 +262,10 @@ impl Renderer for VgerRenderer {
         self.vger.current_transform()
     }
 
+    fn translate(&mut self, offset: LocalOffset) {
+        self.vger.translate(offset)
+    }
+
     fn begin(&mut self, capture: bool) {
         // Switch to the capture Vger if needed
         if self.capture != capture {
@@ -295,9 +298,9 @@ impl Renderer for VgerRenderer {
         match shape {
             Shape::Rectangle(rect, corner_radius) => {
                 self.vger.stroke_rect(
-                    rect.min(),
-                    rect.max(),
-                    corner_radius,
+                    self.vger_point(rect.min()),
+                    self.vger_point(rect.max()),
+                    corner_radius * self.scale,
                     width,
                     paint,
                 );
@@ -324,14 +327,14 @@ impl Renderer for VgerRenderer {
         match path {
             Shape::Rectangle(rect, corner_radius) => {
                 self.vger.fill_rect(
-                    *rect,
-                    corner_radius,
+                    self.vger_rect(*rect),
+                    corner_radius * self.scale,
                     paint,
                     blur_radius * self.scale,
                 );
             },
             Shape::Circle(center, radius) => {
-                self.vger.fill_circle(*center, radius, paint)
+                self.vger.fill_circle(self.vger_point(*center), radius * self.scale, paint)
             },
             Shape::Background => self.vger.fill(paint)
          }
@@ -346,7 +349,7 @@ impl Renderer for VgerRenderer {
 
     fn draw_text(&mut self, layout: &TextLayout, pos: LocalPoint) {
         let mut swash_cache = SwashCache::new();
-        let offset = LocalOffset::new(self.transform.m31, self.transform.m32);
+        let offset = self.current_tranform().transform_point(pos);
         // let pos: LocalPoint = pos.into();
         let clip = self.clip;
         for line in layout.layout_runs() {
@@ -449,7 +452,8 @@ impl Renderer for VgerRenderer {
         match shape {
             Shape::Rectangle(rect, corner) => {
                 self.vger.scissor(self.vger_rect(*rect), (corner * self.scale) as f32);
-                let offset = LocalOffset::new(self.transform.m31, self.transform.m32);
+                let offset = LocalOffset::new(self.current_tranform().m31, self.current_tranform().m32);
+                self.vger.translate(offset);
                 // self.clip = Some(rect + offset);
             },
             Shape::Circle(point, radius) => {}

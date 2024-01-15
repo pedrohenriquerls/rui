@@ -3,7 +3,7 @@ use crate::{*, renderers::VgerRenderer};
 use futures::executor::block_on;
 use std::{
     collections::{HashMap, VecDeque},
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex}, panic::panic_any,
 };
 
 use winit::{
@@ -141,7 +141,10 @@ pub fn rui(view: impl View) {
     let mut window_title = String::from("rui");
     let builder = WindowBuilder::new().with_title(&window_title);
     let window = builder.build(&event_loop).unwrap();
-    let mut renderer = VgerRenderer::new(&window, 0, 0,0.0).unwrap();
+    let mut renderer = match VgerRenderer::new(&window, 1.0) {
+        Ok(render) => render,
+        Err(error) => panic_any(error)
+    };
 
     let mut cx = Context::new();
     let mut mouse_position = LocalPoint::zero();

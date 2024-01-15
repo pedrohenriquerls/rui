@@ -235,6 +235,7 @@ impl Context {
         window_size: Size2D<f32, WorldSpace>,
         scale: f32,
     ) {
+        renderer.begin(false);
         let mut path = vec![0];
         // Disable dirtying the state during layout and rendering
         // to avoid constantly re-rendering if some state is saved.

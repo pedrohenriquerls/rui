@@ -12,7 +12,7 @@ pub struct Img<'a> {
 pub trait Renderer {
     fn begin(&mut self, capture: bool);
 
-    fn transform(&mut self, transform: LocalToWorld);
+    fn transform(&mut self, transform: WorldToLocal);
 
     fn current_tranform(&self) -> LocalToWorld;
 
@@ -58,7 +58,7 @@ impl Renderer for EmptyRenderer {
         todo!()
     }
 
-    fn transform(&mut self, transform: LocalToWorld) {
+    fn transform(&mut self, transform: WorldToLocal) {
         todo!()
     }
 

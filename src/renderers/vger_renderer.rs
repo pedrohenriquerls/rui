@@ -5,6 +5,7 @@ use std::sync::Arc;
 use crate::renderers::renderer::Renderer;
 use anyhow::Result;
 use cosmic_text::{SubpixelBin, SwashCache, TextLayout};
+use winit::window::Window;
 use crate::*;
 use image::{DynamicImage, EncodableLayout, RgbaImage};
 use vger::{Image, PaintIndex, PixelFormat, Vger};
@@ -19,7 +20,7 @@ pub struct VgerRenderer {
     alt_vger: Option<Vger>,
     pub config: SurfaceConfiguration,
     scale: f32,
-    transform: LocalToWorld,
+    transform: WorldToLocal,
     clip: Option<LocalRect>,
     capture: bool,
 }
@@ -32,17 +33,22 @@ const CLEAR_COLOR: wgpu::Color = wgpu::Color {
 };
 
 impl VgerRenderer {
-    pub fn new<
-        W: raw_window_handle::HasRawDisplayHandle + raw_window_handle::HasRawWindowHandle,
-    >(
-        window: &W,
-        width: u32,
-        height: u32,
+    pub fn new(
+        window: &Window,
         scale: f32,
     ) -> Result<Self> {
         let instance = wgpu::Instance::default();
 
-        let surface = unsafe { instance.create_surface(window) }?;
+        let (size, surface) = unsafe {
+            let size = window.inner_size();
+            let surface = instance.create_surface(&window);
+            (size, surface)
+        };
+
+        let surface = match surface {
+            Ok(s) => s,
+            Err(error) => std::panic::panic_any(error)
+        };
 
         let adapter =
             futures::executor::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
@@ -90,8 +96,8 @@ impl VgerRenderer {
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: texture_format,
-            width,
-            height,
+            width: size.width,
+            height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
             view_formats: vec![],
@@ -108,7 +114,7 @@ impl VgerRenderer {
             alt_vger: None,
             scale,
             config,
-            transform: LocalToWorld::identity(),
+            transform: WorldToLocal::identity(),
             clip: None,
             capture: false,
         })
@@ -254,8 +260,9 @@ impl VgerRenderer {
 
 impl Renderer for VgerRenderer {
     fn current_tranform(&self) -> LocalToWorld {
-        self.transform
+        self.vger.current_transform()
     }
+
     fn begin(&mut self, capture: bool) {
         // Switch to the capture Vger if needed
         if self.capture != capture {
@@ -270,7 +277,7 @@ impl Renderer for VgerRenderer {
             mem::swap(&mut self.vger, self.alt_vger.as_mut().unwrap())
         }
 
-        self.transform = LocalToWorld::identity();
+        self.transform = WorldToLocal::identity();
         self.vger.begin(
             self.config.width as f32,
             self.config.height as f32,
@@ -430,7 +437,7 @@ impl Renderer for VgerRenderer {
     //     });
     // }
 
-    fn transform(&mut self, transform: LocalToWorld) {
+    fn transform(&mut self, transform: WorldToLocal) {
         self.transform = transform;
     }
 

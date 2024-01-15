@@ -24,7 +24,7 @@ pub struct CommandInfo {
     pub key: Option<HotKey>,
 }
 
-pub const DEBUG_LAYOUT: bool = false;
+pub const DEBUG_LAYOUT: bool = true;
 
 #[derive(Copy, Clone, Default, PartialEq, Debug)]
 pub(crate) struct LayoutBox {
@@ -260,9 +260,10 @@ impl Context {
 
         if self.render_dirty {
             let xf = WorldToLocal::identity();
+            renderer.transform(xf);
             for rect in self.dirty_region.rects() {
                 let origin = xf.transform_point(rect.min());
-                let end = xf.transform_point(rect.max());
+                // let end = xf.transform_point(rect.max());
                 let local_rect = LocalRect::new(origin, LocalSize::new(rect.size.width, rect.size.height));
                 // let local_rect = LocalRect::default();
                 renderer.stroke(Shape::Rectangle(&local_rect, 0.0), Paint::Color(RED_HIGHLIGHT), scale);

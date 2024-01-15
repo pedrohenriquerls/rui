@@ -2,10 +2,17 @@ use rui::*;
 
 fn main() {
     hstack((
-        circle().color(RED_HIGHLIGHT).padding(Auto),
+        circle().color(RED_HIGHLIGHT)
+            .tap(|_| {
+                println!("circle tapped");
+            })
+            .padding(Auto),
         rectangle()
             .corner_radius(5.0)
             .color(AZURE_HIGHLIGHT)
+            .tap(|_| {
+                println!("rect tapped");
+            })
             .padding(Auto),
     ))
     .run()

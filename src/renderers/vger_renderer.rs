@@ -159,11 +159,7 @@ impl VgerRenderer {
         let origin = rect.origin;
         let origin = self.vger_point(origin);
 
-        let end = LocalPoint::new(rect.min_x(), rect.min_y());
-        let end = self.vger_point(end);
-
-        let size = (end - origin).to_size();
-        vger::defs::LocalRect::new(origin, size)
+        vger::defs::LocalRect::new(origin, rect.size)
     }
 
     fn render_image(&mut self) -> Option<DynamicImage> {
@@ -263,6 +259,7 @@ impl Renderer for VgerRenderer {
     }
 
     fn translate(&mut self, offset: LocalOffset) {
+        self.vger.save();
         self.vger.translate(offset)
     }
 
@@ -328,7 +325,9 @@ impl Renderer for VgerRenderer {
             Shape::Rectangle(rect, corner_radius) => {
                 self.vger.fill_rect(
                     self.vger_rect(*rect),
-                    corner_radius * self.scale,
+                    // *rect,
+                    // corner_radius * self.scale,
+                    0.0,
                     paint,
                     blur_radius * self.scale,
                 );
@@ -451,10 +450,9 @@ impl Renderer for VgerRenderer {
     fn clip(&mut self, shape: Shape) {
         match shape {
             Shape::Rectangle(rect, corner) => {
-                self.vger.scissor(self.vger_rect(*rect), (corner * self.scale) as f32);
-                let offset = LocalOffset::new(self.current_tranform().m31, self.current_tranform().m32);
-                self.vger.translate(offset);
-                // self.clip = Some(rect + offset);
+                let clip_rect = self.vger_rect(*rect);
+                self.vger.scissor(clip_rect, (corner * self.scale) as f32);
+                self.clip = Some(clip_rect); 
             },
             Shape::Circle(point, radius) => {}
             Shape::Background => {}

@@ -60,7 +60,7 @@ impl<VT: ViewTuple + 'static, D: StackDirection + 'static> View for Stack<VT, D>
 
             // args.cx.vger.save();
 
-            // args.cx.vger.translate(layout_box.offset);
+            args.rd.translate(layout_box.offset);
 
             (*child).draw(path, args);
             c += 1;

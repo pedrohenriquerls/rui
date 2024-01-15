@@ -55,7 +55,6 @@ pub fn hslider(value: impl Binding<f32>) -> impl SliderMods {
                     );
 
                     args.rd.fill(Shape::Circle(&LocalPoint::new(x, c.y), r), Paint::Color(opts.thumb), 0.0);
-                    args.rd.fill(Shape::Background, Paint::Color(AZURE_HIGHLIGHT_BACKGROUND), 0.0);
                 })
                 .geom(move |cx, sz, _| {
                     if sz.width != cx[width] {

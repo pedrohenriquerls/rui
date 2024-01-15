@@ -254,7 +254,7 @@ impl Context {
         // This Calculatuion must be done on renderer?
         // Center the root view in the window.
         self.root_offset = ((local_window_size - sz) / 2.0).into();
-        renderer.translate(self.root_offset);
+        renderer.translate(self.root_offset, false);
         view.draw(&mut path, &mut DrawArgs { cx: self, rd: renderer });
         self.enable_dirty = true;
 

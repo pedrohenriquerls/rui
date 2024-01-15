@@ -254,12 +254,17 @@ impl VgerRenderer {
 }
 
 impl Renderer for VgerRenderer {
+    fn restore(&mut self) {
+        self.vger.restore();
+    }
     fn current_tranform(&self) -> LocalToWorld {
         self.vger.current_transform()
     }
 
-    fn translate(&mut self, offset: LocalOffset) {
-        self.vger.save();
+    fn translate(&mut self, offset: LocalOffset, save: bool) {
+        if save {
+            self.vger.save();
+        }
         self.vger.translate(offset)
     }
 
@@ -316,26 +321,27 @@ impl Renderer for VgerRenderer {
     }
 
     fn fill(&mut self, path: Shape, brush: Paint, blur_radius: f32) {
-        let paint = match self.brush_to_paint(brush) {
-            Some(paint) => paint,
-            None => return,
+        match self.brush_to_paint(brush) {
+            Some(paint) => {
+                match path {
+                    Shape::Rectangle(rect, corner_radius) => {
+                        self.vger.fill_rect(
+                            self.vger_rect(*rect),
+                            // *rect,
+                            corner_radius * self.scale,
+                            paint,
+                            blur_radius * self.scale,
+                        );
+                    },
+                    Shape::Circle(center, radius) => {
+                        self.vger.fill_circle(self.vger_point(*center), radius * self.scale, paint)
+                    },
+                    Shape::Background => self.vger.fill(paint)
+                }
+            },
+            None => {},
         };
 
-        match path {
-            Shape::Rectangle(rect, corner_radius) => {
-                self.vger.fill_rect(
-                    self.vger_rect(*rect),
-                    // *rect,
-                    corner_radius * self.scale,
-                    paint,
-                    blur_radius * self.scale,
-                );
-            },
-            Shape::Circle(center, radius) => {
-                self.vger.fill_circle(self.vger_point(*center), radius * self.scale, paint)
-            },
-            Shape::Background => self.vger.fill(paint)
-         }
         // } else if let Some(rect) = path.as_rounded_rect() {
         //     self.vger.fill_rect(
         //         self.vger_rect(rect.rect()),

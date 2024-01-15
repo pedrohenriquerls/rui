@@ -11,7 +11,7 @@ fn my_slider(s: impl Binding<f32>) -> impl View {
         vstack((
             v.to_string().font_size(10).padding(Auto),
             hslider(s).thumb_color(RED_HIGHLIGHT).padding(Auto),
-        ))
+        )).background(rectangle().color(AZURE_HIGHLIGHT))
     })
 }
 

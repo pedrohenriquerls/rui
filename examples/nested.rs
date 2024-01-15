@@ -15,11 +15,12 @@ fn main() {
             hstack((
                 my_rectangle(BUTTON_HOVER_COLOR),
                 vstack((
+                    hstack((my_rectangle(RED_HIGHLIGHT_BACKGROUND), 
+                        vstack((my_rectangle(RED_HIGHLIGHT), my_rectangle(RED_HIGHLIGHT))))),
                     my_rectangle(AZURE_HIGHLIGHT_DARK),
-                    hstack((my_rectangle(RED_HIGHLIGHT_BACKGROUND), vstack((my_rectangle(RED_HIGHLIGHT), my_rectangle(RED_HIGHLIGHT))))),
                 )),
             )),
         )),
-    ))
+    )).background(rectangle().color(GROOVES))
     .run()
 }

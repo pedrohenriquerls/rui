@@ -326,8 +326,7 @@ impl Renderer for VgerRenderer {
                 self.vger.fill_rect(
                     self.vger_rect(*rect),
                     // *rect,
-                    // corner_radius * self.scale,
-                    0.0,
+                    corner_radius * self.scale,
                     paint,
                     blur_radius * self.scale,
                 );

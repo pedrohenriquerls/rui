@@ -2,7 +2,7 @@ use rui::*;
 
 fn main() {
     zstack((
-        "This is a test.",
+        rectangle().color(AZURE_HIGHLIGHT).padding(Auto),
         circle().color(RED_HIGHLIGHT).padding(Auto),
     ))
     .run()

@@ -10,7 +10,7 @@ fn main() {
         rectangle()
             .corner_radius(5.0)
             .color(AZURE_HIGHLIGHT)
-            .tap(|_| {
+            .tap(|_| { // actions must be limited to the shape that receive the event
                 println!("rect tapped");
             })
             .padding(Auto),

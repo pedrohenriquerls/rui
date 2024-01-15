@@ -1,3 +1,7 @@
+use std::ops::Range;
+
+use cosmic_text::{ AttrsList, Attrs, Style};
+use peniko::Color;
 use rui::*;
 
 #[derive(Default)]
@@ -8,8 +12,10 @@ struct MyState {
 /// A slider with a value.
 fn my_slider(s: impl Binding<f32>) -> impl View {
     with_ref(s, move |v| {
+        let attrs = Attrs::new().color(Color::BLUE_VIOLET).style(Style::Italic);
+        let attrs_list = AttrsList::new(attrs);
         vstack((
-            v.to_string().font_size(10).padding(Auto),
+            v.to_string().layout(attrs_list).padding(Auto),
             hslider(s).thumb_color(RED_HIGHLIGHT).padding(Auto),
         )).background(rectangle().color(AZURE_HIGHLIGHT))
     })

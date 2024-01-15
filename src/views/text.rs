@@ -1,31 +1,24 @@
+use cosmic_text::{TextLayout, AttrsList, Attrs};
+use peniko::Color;
 use crate::*;
 
 pub trait TextModifiers: View + Sized {
-    fn font_size(self, size: u32) -> Text;
-    fn color(self, color: Color) -> Text;
+    fn layout(self, attrs: AttrsList) -> Text;
 }
 
 /// Struct for `text`.
 #[derive(Clone)]
 pub struct Text {
     text: String,
-    size: u32,
-    color: Color,
+    layout: TextLayout,
 }
 
 impl Text {
     pub const DEFAULT_SIZE: u32 = 18;
-    pub fn color(self, color: Color) -> Text {
-        Text {
-            text: self.text,
-            size: self.size,
-            color,
-        }
-    }
 }
 
 impl View for Text {
-    fn draw(&self, _path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         // let vger = &mut args.cx.vger;
         // let origin = vger.text_bounds(self.text.as_str(), self.size, None).origin;
 
@@ -33,9 +26,14 @@ impl View for Text {
         // vger.translate([-origin.x, -origin.y]);
         // vger.text(self.text.as_str(), self.size, self.color, None);
         // vger.restore();
+        let rect = args.cx.get_layout(path).rect;
+        let origin = rect.origin;
+        args.rd.translate([-origin.x, -origin.y].into(), true);
+        args.rd.draw_text(&self.layout, rect.origin);
+        args.rd.restore();
     }
-    fn layout(&self, _path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        LocalSize::zero()
+    fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
+        args.cx.get_layout(path).rect.size
         // (args.cx.text_bounds)(self.text.as_str(), self.size, None).size
     }
     fn hittest(&self, _path: &mut IdPath, _pt: LocalPoint, _cx: &mut Context) -> Option<ViewId> {
@@ -57,18 +55,12 @@ impl View for Text {
 }
 
 impl TextModifiers for Text {
-    fn font_size(self, size: u32) -> Self {
-        Self {
-            text: self.text,
-            color: self.color,
-            size,
-        }
-    }
-    fn color(self, color: Color) -> Text {
+    fn layout(self, attrs: AttrsList) -> Text {
+        let mut layout = TextLayout::new();
+        layout.set_text(&self.text, attrs);
         Text {
             text: self.text,
-            size: self.size,
-            color,
+            layout
         }
     }
 }
@@ -77,10 +69,18 @@ impl private::Sealed for Text {}
 
 /// Shows a string as a label (not editable).
 pub fn text(name: &str) -> Text {
+
+        // size: Text::DEFAULT_SIZE,
+    // color: TEXT_COLOR
+    let mut layout = TextLayout::new();
+    let attrs = Attrs::new().color(Color::GRAY);
+
+    let attrs_list = AttrsList::new(attrs);
+    layout.set_text(name, attrs_list);
+
     Text {
         text: String::from(name),
-        size: Text::DEFAULT_SIZE,
-        color: TEXT_COLOR,
+        layout
     }
 }
 
@@ -88,7 +88,7 @@ impl<V> View for V
 where
     V: std::fmt::Display + std::fmt::Debug + 'static,
 {
-    fn draw(&self, _path: &mut IdPath, args: &mut DrawArgs) {
+    fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
         let txt = &format!("{}", self);
         // let vger = &mut args.cx.vger;
         // let origin = vger.text_bounds(txt, Text::DEFAULT_SIZE, None).origin;
@@ -97,11 +97,19 @@ where
         // vger.translate([-origin.x, -origin.y]);
         // vger.text(txt, Text::DEFAULT_SIZE, TEXT_COLOR, None);
         // vger.restore();
+        let rect = args.cx.get_layout(path).rect;
+        let origin = rect.origin;
+        args.rd.translate([-origin.x, -origin.y].into(), true);
+        let mut layout = TextLayout::new();
+        let attrs = Attrs::new().color(Color::GRAY);
+
+        let attrs_list = AttrsList::new(attrs);
+        layout.set_text(txt, attrs_list);
+        args.rd.draw_text(&layout, rect.origin);
+        args.rd.restore();
     }
-    fn layout(&self, _path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
-        let txt = &format!("{}", self);
-        LocalSize::zero()
-        // (args.cx.text_bounds)(txt, Text::DEFAULT_SIZE, None).size
+    fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {
+        args.cx.get_layout(path).rect.size
     }
 
     fn access(
@@ -122,18 +130,14 @@ impl<V> TextModifiers for V
 where
     V: std::fmt::Display + std::fmt::Debug + 'static,
 {
-    fn font_size(self, size: u32) -> Text {
+
+    fn layout(self, attrs: AttrsList) -> Text {
+        let mut layout = TextLayout::new();
+        let text = format!("{}", self);
+        layout.set_text(&text, attrs);
         Text {
-            text: format!("{}", self),
-            size,
-            color: TEXT_COLOR,
-        }
-    }
-    fn color(self, color: Color) -> Text {
-        Text {
-            text: format!("{}", self),
-            size: Text::DEFAULT_SIZE,
-            color,
+            text,
+            layout
         }
     }
 }

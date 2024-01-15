@@ -1,6 +1,7 @@
 use std::mem;
 use std::sync::mpsc::sync_channel;
 use std::sync::Arc;
+use peniko::Color;
 
 use crate::renderers::renderer::Renderer;
 use anyhow::Result;
@@ -354,6 +355,7 @@ impl Renderer for VgerRenderer {
     fn draw_text(&mut self, layout: &TextLayout, pos: LocalPoint) {
         let mut swash_cache = SwashCache::new();
         let offset = self.current_tranform().transform_point(pos);
+        // self.translate(offset, true);
         // let pos: LocalPoint = pos.into();
         let clip = self.clip;
         for line in layout.layout_runs() {
@@ -382,12 +384,7 @@ impl Renderer for VgerRenderer {
                 //     continue;
                 // }
 
-                let color = Color {
-                    r: glyph_run.color.r as f32,
-                    g: glyph_run.color.g as f32,
-                    b: glyph_run.color.b as f32,
-                    a: glyph_run.color.a as f32
-                };
+                let color = vger_color(glyph_run.color);
                 if let Some(paint) = self.brush_to_paint(Paint::Color(color)) {
                     let glyph_x = x * self.scale as f32;
                     let (new_x, subpx_x) = SubpixelBin::new(glyph_x);
@@ -500,6 +497,7 @@ impl Renderer for VgerRenderer {
     }
 }
 
+// Drop Peniko in favor of local Color pattern
 fn vger_color(color: Color) -> vger::Color {
     vger::Color {
         r: color.r as f32 / 255.0,

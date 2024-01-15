@@ -12,7 +12,7 @@ fn slider_example() -> impl View {
 }
 
 fn caption(s: &'static str) -> impl View {
-    s.font_size(12).padding(Auto)
+    s.padding(Auto)
 }
 
 fn knob_example() -> impl View {

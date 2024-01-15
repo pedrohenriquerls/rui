@@ -25,12 +25,11 @@ where
     }
 
     fn draw(&self, path: &mut IdPath, args: &mut DrawArgs) {
-        // args.cx.vger.save();
-        // args.cx.vger.translate([self.padding, self.padding]);
+        args.rd.translate([self.padding, self.padding].into(), true);
         path.push(0);
         self.child.draw(path, args);
         path.pop();
-        // args.cx.vger.restore();
+        args.rd.restore();
     }
 
     fn layout(&self, path: &mut IdPath, args: &mut LayoutArgs) -> LocalSize {

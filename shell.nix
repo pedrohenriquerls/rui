@@ -1,7 +1,7 @@
 let
   nixpkgs-src = builtins.fetchTarball {
     # 23.05
-    url = "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz";
+    url = "https://github.com/NixOS/nixpkgs/archive/nixos-23.11.tar.gz";
   };
 
   pkgs = import nixpkgs-src {
@@ -15,6 +15,8 @@ let
     rustup
     libxkbcommon
     libGL
+    vulkan-tools
+    mesa
 
   # WINIT_UNIX_BACKEND=wayland
     wayland
@@ -30,7 +32,8 @@ let
   shell = pkgs.mkShell {
     buildInputs = lib-defs;
     shellHook = ''
-      export WINIT_UNIX_BACKEND=x11
+      export WINIT_UNIX_BACKEND=wayland
+      export WAYLAND_DISPLAY=wayland-0
       rustup update
       # Augment the dynamic linker path
       export "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath lib-defs}"
